@@ -16,6 +16,9 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// DHT22 TEMPERATURE HUMIDITY SENSOR
+#include "DHT.h"
+
 const char* ssid = "UPCA9E82C2";
 const char* wifi_password = "tp3Ya2mkhztk";
 
@@ -26,6 +29,8 @@ char user[] = "u112031db1";
 char password[] = "4i340So";
 
 WiFiClient client;
+
+// MYSQL
 MySQL_Connection conn((Client *)&client);
 
 Adafruit_MCP3008 adc;
@@ -48,6 +53,9 @@ Adafruit_MCP23017 mcp0;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
+// 5 minutes
+int cont = 1;
+
 void setup() {
   // TEMPERATURE
    sensors.begin();
@@ -56,16 +64,22 @@ void setup() {
   delay(10);
 
   mcp0.begin(0);
-  mcp0.pinMode(6, OUTPUT);
-  mcp0.pinMode(5, OUTPUT);
-  mcp0.pinMode(4, OUTPUT);
-  mcp0.pinMode(3, OUTPUT);
-  mcp0.pinMode(2, OUTPUT);
-  mcp0.pinMode(1, OUTPUT);
   mcp0.pinMode(0, OUTPUT);
-
-  mcp0.pinMode(8, INPUT);
-  mcp0.pinMode(9, INPUT);
+  mcp0.pinMode(1, OUTPUT);
+  mcp0.pinMode(2, OUTPUT);
+  mcp0.pinMode(3, OUTPUT);
+  mcp0.pinMode(4, OUTPUT);
+  mcp0.pinMode(5, OUTPUT);
+  mcp0.pinMode(6, OUTPUT);
+  mcp0.pinMode(7, OUTPUT);
+  mcp0.pinMode(8, OUTPUT);
+  mcp0.pinMode(9, OUTPUT);
+  mcp0.pinMode(10, OUTPUT);
+  mcp0.pinMode(11, OUTPUT);
+  mcp0.pinMode(12, OUTPUT);
+  mcp0.pinMode(13, OUTPUT);
+  mcp0.pinMode(14, OUTPUT);
+  mcp0.pinMode(15, OUTPUT);
 
   Serial.println();
   Serial.println();
@@ -123,38 +137,9 @@ void setup() {
 int value = 0;
 
 void loop() {
-  // TEMPERATURE
-  Serial.print("Requesting temperatures...");
-  sensors.requestTemperatures(); // Send the command to get temperatures
-  Serial.println("DONE");
-
-  Serial.print("Temperature for the device 1 (index 0) is: ");
-  Serial.println(sensors.getTempCByIndex(0));
-  
-  // TIME
+  MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
+  // TIME TIMESTAMP
   String timestamp;
-  const char* root_ca= \
-  "-----BEGIN CERTIFICATE-----\n" \
-"MIIDVDCCAjygAwIBAgIDAjRWMA0GCSqGSIb3DQEBBQUAMEIxCzAJBgNVBAYTAlVT\n" \
-"MRYwFAYDVQQKEw1HZW9UcnVzdCBJbmMuMRswGQYDVQQDExJHZW9UcnVzdCBHbG9i\n" \
-"YWwgQ0EwHhcNMDIwNTIxMDQwMDAwWhcNMjIwNTIxMDQwMDAwWjBCMQswCQYDVQQG\n" \
-"EwJVUzEWMBQGA1UEChMNR2VvVHJ1c3QgSW5jLjEbMBkGA1UEAxMSR2VvVHJ1c3Qg\n" \
-"R2xvYmFsIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2swYYzD9\n" \
-"9BcjGlZ+W988bDjkcbd4kdS8odhM+KhDtgPpTSEHCIjaWC9mOSm9BXiLnTjoBbdq\n" \
-"fnGk5sRgprDvgOSJKA+eJdbtg/OtppHHmMlCGDUUna2YRpIuT8rxh0PBFpVXLVDv\n" \
-"iS2Aelet8u5fa9IAjbkU+BQVNdnARqN7csiRv8lVK83Qlz6cJmTM386DGXHKTubU\n" \
-"1XupGc1V3sjs0l44U+VcT4wt/lAjNvxm5suOpDkZALeVAjmRCw7+OC7RHQWa9k0+\n" \
-"bw8HHa8sHo9gOeL6NlMTOdReJivbPagUvTLrGAMoUgRx5aszPeE4uwc2hGKceeoW\n" \
-"MPRfwCvocWvk+QIDAQABo1MwUTAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQWBBTA\n" \
-"ephojYn7qwVkDBF9qn1luMrMTjAfBgNVHSMEGDAWgBTAephojYn7qwVkDBF9qn1l\n" \
-"uMrMTjANBgkqhkiG9w0BAQUFAAOCAQEANeMpauUvXVSOKVCUn5kaFOSPeCpilKIn\n" \
-"Z57QzxpeR+nBsqTP3UEaBU6bS+5Kb1VSsyShNwrrZHYqLizz/Tt1kL/6cdjHPTfS\n" \
-"tQWVYrmm3ok9Nns4d0iXrKYgjy6myQzCsplFAMfOEVEiIuCl6rYVSAlk6l5PdPcF\n" \
-"PseKUgzbFbS9bZvlxrFUaKnjaZC2mqUPuLk/IH2uSrW4nOQdtqvmlKXBx4Ot2/Un\n" \
-"hw4EbNX/3aBd7YdStysVAq45pmp06drE57xNNB6pXE0zX5IJL4hmXXeXxx12E6nV\n" \
-"5fEWCRE11azbJHFwLJhWC9kXtNHjUStedejV0NxPNO3CBWaAocvmMw==\n" \
-"-----END CERTIFICATE-----\n";
-
   HTTPClient http; 
   http.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");  //Specify request destination
   int httpCode = http.GET();
@@ -165,66 +150,15 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
-  /*
-  int val = analogRead(A0); // read input value
-  Serial.print("ESP8266_ADC0: ");
-  Serial.println(val);
-  */
-  Serial.println((String)timestamp + ": MCP3008_ADC_0: " + adc.readADC(0));
-  Serial.println((String)timestamp + ": MCP3008_ADC_1: " + adc.readADC(1));
-  Serial.println((String)timestamp + ": MCP3008_ADC_2: " + adc.readADC(2));
-  Serial.println((String)timestamp + ": MCP3008_ADC_3: " + adc.readADC(3));
-  Serial.println((String)timestamp + ": MCP3008_ADC_4: " + adc.readADC(4));
-  Serial.println((String)timestamp + ": MCP3008_ADC_5: " + adc.readADC(5));
-  Serial.println((String)timestamp + ": MCP3008_ADC_6: " + adc.readADC(6));
-  Serial.println((String)timestamp + ": MCP3008_ADC_7: " + adc.readADC(7));
   
-  Serial.println(timestamp + ": Recording data of water level.");
-  String UPDATE_SQL = (String)"update u112031db1.probe set status=" + adc.readADC(0) + " where name='water_level'";
-  // Initiate the query class instance
-  MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
-  // Execute the query
-  cur_mem->execute(UPDATE_SQL.c_str());
-  // Note: since there are no results, we do not need to read any data
-  // Deleting the cursor also frees up memory used
-  delete cur_mem;
+  // TEMPERATURE
+  Serial.print("Requesting temperatures...");
+  sensors.requestTemperatures(); // Send the command to get temperatures
+  Serial.println("DONE");
 
-  Serial.println(timestamp + ": Recording data of moisture.");
-  String INSERT_SQL = (String)"insert into u112031db1.mis_soil (timestamp, area, moisture) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Moisture\', " + adc.readADC(1) + ")";
-  // Initiate the query class instance
-  cur_mem = new MySQL_Cursor(&conn);
-  // Execute the query
-  cur_mem->execute(INSERT_SQL.c_str());
-  // Note: since there are no results, we do not need to read any data
-  // Deleting the cursor also frees up memory used
-  delete cur_mem;
-  
-  mcp0.digitalWrite(6, LOW);
-  mcp0.digitalWrite(6, HIGH);
-  delay(500);
-  mcp0.digitalWrite(6, LOW);
-  mcp0.digitalWrite(5, HIGH);
-  delay(500);
-  mcp0.digitalWrite(5, LOW);
-  mcp0.digitalWrite(4, HIGH);
-  delay(500);
-  mcp0.digitalWrite(4, LOW);
-  mcp0.digitalWrite(3, HIGH);
-  delay(500);
-  mcp0.digitalWrite(3, LOW);
-  mcp0.digitalWrite(2, HIGH);
-  delay(500);
-  mcp0.digitalWrite(2, LOW);
-  mcp0.digitalWrite(1, HIGH);
-  delay(500);
-  mcp0.digitalWrite(1, LOW);
-  mcp0.digitalWrite(0, HIGH);
-  delay(500);
-  mcp0.digitalWrite(0, LOW);
+  Serial.print("Temperature for the device 1 (index 0) is: ");
+  Serial.println(sensors.getTempCByIndex(0));
 
-  Serial.println((String)timestamp + ": MCP23017_PIN_8_READ: " + mcp0.digitalRead(8));
-  Serial.println((String)timestamp + ": MCP23017_PIN_9_READ: " + mcp0.digitalRead(9));
-  
   // Clears the trigPin
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -239,6 +173,101 @@ void loop() {
   // Prints the distance on the Serial Monitor
   Serial.print(timestamp + ": Distance: ");
   Serial.println(distance);
+     
+  /*
+  int val = analogRead(A0); // read input value
+  Serial.print("ESP8266_ADC0: ");
+  Serial.println(val);
+  */
+  Serial.println((String)timestamp + ": MCP3008_ADC_0: " + adc.readADC(0)); // water level
+  Serial.println((String)timestamp + ": MCP3008_ADC_1: " + adc.readADC(1)); // moisture sensor
+  Serial.println((String)timestamp + ": MCP3008_ADC_2: " + adc.readADC(2)); // light spectrum
+  Serial.println((String)timestamp + ": MCP3008_ADC_3: " + adc.readADC(3));
+  Serial.println((String)timestamp + ": MCP3008_ADC_4: " + adc.readADC(4));
+  Serial.println((String)timestamp + ": MCP3008_ADC_5: " + adc.readADC(5));
+  Serial.println((String)timestamp + ": MCP3008_ADC_6: " + adc.readADC(6));
+  Serial.println((String)timestamp + ": MCP3008_ADC_7: " + adc.readADC(7));
+
+  if (cont == 5) {
+    Serial.println(timestamp + ": Recording data of water level.");
+    String UPDATE_SQL = (String)"update u112031db1.probe set status=" + adc.readADC(0) + " where name='water_level'";
+    cur_mem = new MySQL_Cursor(&conn);
+  // Execute the query
+    cur_mem->execute(UPDATE_SQL.c_str());
+    // Note: since there are no results, we do not need to read any data
+    // Deleting the cursor also frees up memory used
+    delete cur_mem;
+  }
+  
+  Serial.println(timestamp + ": Recording data of moisture.");
+  String INSERT_SQL = (String)"insert into u112031db1.mis_soil (timestamp, area, moisture) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Moisture\', " + adc.readADC(1) + ")";
+  cur_mem = new MySQL_Cursor(&conn);
+  // Execute the query
+  cur_mem->execute(INSERT_SQL.c_str());
+  // Note: since there are no results, we do not need to read any data
+  // Deleting the cursor also frees up memory used
+  delete cur_mem;
+
+  Serial.println(timestamp + ": Recording data of light spectrum.");
+  String UPDATE_SQL = (String)"update u112031db1.probe set status=" + adc.readADC(2) + " where name='light_spectrum'";
+  cur_mem = new MySQL_Cursor(&conn);
+  // Execute the query
+  cur_mem->execute(UPDATE_SQL.c_str());
+  // Note: since there are no results, we do not need to read any data
+  // Deleting the cursor also frees up memory used
+  delete cur_mem;
+
+  if (cont == 5) {
+    Serial.println(timestamp + ": Recording distance.");
+    String INSERT_SQL = (String)"insert into u112031db1.mis_distance (timestamp, area, distance) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Distance\', " + distance + ")";
+  cur_mem = new MySQL_Cursor(&conn);
+    // Execute the query
+    cur_mem->execute(INSERT_SQL.c_str());
+    // Note: since there are no results, we do not need to read any data
+    // Deleting the cursor also frees up memory used
+    delete cur_mem;
+  }
+  
+
+  mcp0.digitalWrite(0, HIGH);
+  delay(500);
+  mcp0.digitalWrite(0, LOW);
+
+  mcp0.digitalWrite(1, HIGH);
+  delay(500);
+  mcp0.digitalWrite(1, LOW);
+
+  mcp0.digitalWrite(2, HIGH);
+  delay(500);
+  mcp0.digitalWrite(2, LOW);
+
+  mcp0.digitalWrite(3, HIGH);
+  delay(500);
+  mcp0.digitalWrite(3, LOW);
+
+  mcp0.digitalWrite(4, HIGH);
+  delay(500);
+  mcp0.digitalWrite(4, LOW);
+
+  mcp0.digitalWrite(5, HIGH);
+  delay(500);
+  mcp0.digitalWrite(5, LOW);
+
+  mcp0.digitalWrite(6, HIGH);
+  delay(500);
+  mcp0.digitalWrite(6, LOW);
+
+  Serial.println((String)timestamp + ": MCP23017_PIN_8_READ: " + mcp0.digitalRead(8));
+  Serial.println((String)timestamp + ": MCP23017_PIN_9_READ: " + mcp0.digitalRead(9));
+  
+  // 5 minutes
+  if (cont == 5) {
+    cont = 0;
+  }
   
   delay(60000);
+
+  // 5 minutes
+  cont = cont + 1;
+  
 }
