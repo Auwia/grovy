@@ -1,6 +1,6 @@
 /* * Author: Massimo Manganiello * */
 /* 16/05/2018: first development. * version: 1.0 */
-/* 17/06/2018: new core / feature. * version: 1.0 */
+/* 17/06/2018: new core / feature. * version: 2.0 */
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
 #include <OneWire.h>
@@ -43,8 +43,8 @@ Adafruit_MCP3008 adc;
 #define CS_PIN D8
 
 // RANGE SENSOR
-const int trigPin = 2; //D4
-const int echoPin = 0; //D3
+const int trigPin = 0; //D4
+const int echoPin = 2; //D3
 long duration;
 int distance;
 
@@ -64,15 +64,16 @@ const int FANLED = 4;
 const int CO2 = 5;
 const int LED_WARM_WHITE = 6;
 const int LED_FULL_SPECTRUM_UV = 7;
-const int LED_DEEP_RED_1 = 8;
-const int LED_DEEP_RED_2 = 9;
+const int LED_DEEP_RED_1 = 8; // TO ACCORPATE
+const int LED_DEEP_RED_2 = 9; // TO ACCORPATE
 const int LED_BRIGHT_RED = 10;
-const int LED_BRIGHT_BLUE_1 = 11;
-const int LED_BRIGHT_BLUE_2 = 12;
+const int LED_BRIGHT_BLUE_1 = 11; // TO ACCORPATE
+const int LED_BRIGHT_BLUE_2 = 12; // TO ACCORPATE
 const int LED_ROYAL_BLUE = 13;
 const int WATER_PUMP = 14;
 const int HEATER = 15;
-const int PELTIER = 16;
+const int PELTIER = 16;       // TO REMOVE
+const int DEHUMIDIFIER = 17;  // TO REMOVE
 
 String timestamp;
  
@@ -113,6 +114,15 @@ void setup() {
   client.subscribe("water_level");
   client.subscribe("light_spectrum");
   client.subscribe("moisture");
+  client.subscribe("fanIn");
+  client.subscribe("fanOutLeft");
+  client.subscribe("fanOutRight");
+  client.subscribe("fanLed");
+  client.subscribe("co2");
+  client.subscribe("heater");
+  client.subscribe("peltier");
+  client.subscribe("water_pump");
+  client.subscribe("dehumidifier");
 
     // TEMPERATURE
   sensors.begin();
@@ -164,14 +174,90 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i];
   }
   Serial.println("");
+  delay(1000);
+
+  if (String(topic).equals("dehumidifier")) {
+    if(message.equals("1")) {
+      Serial.println("DEHUMIDIFIER->ON");
+      mcp0.digitalWrite(DEHUMIDIFIER, HIGH);
+    } else {
+      Serial.println("DEHUMIDIFIER->OFF");
+      mcp0.digitalWrite(DEHUMIDIFIER, LOW);      
+    }
+  }
   
-  if (String(topic).equals("water")) {
+  if (String(topic).equals("peltier")) {
+    if(message.equals("1")) {
+      Serial.println("PELTIER->ON");
+      mcp0.digitalWrite(PELTIER, HIGH);
+    } else {
+      Serial.println("PELTIER->OFF");
+      mcp0.digitalWrite(PELTIER, LOW);      
+    }
+  }
+  
+  if (String(topic).equals("heater")) {
+    if(message.equals("1")) {
+      Serial.println("HEATER->ON");
+      mcp0.digitalWrite(HEATER, HIGH);
+    } else {
+      Serial.println("HEATER->OFF");
+      mcp0.digitalWrite(HEATER, LOW);      
+    }
+  }
+
+  if (String(topic).equals("co2")) {
+    if(message.equals("1")) {
+      Serial.println("CO2->ON");
+      mcp0.digitalWrite(CO2, HIGH);
+    } else {
+      Serial.println("CO2->OFF");
+      mcp0.digitalWrite(CO2, LOW);      
+    }
+  }
+  
+  if (String(topic).equals("fanLed")) {
+    if(message.equals("1")) {
+      Serial.println("FAN LED->ON");
+      mcp0.digitalWrite(FANLED, HIGH);
+    } else {
+      Serial.println("FAN LED->OFF");
+      mcp0.digitalWrite(FANLED, LOW);      
+    }
+  }
+
+  if (String(topic).equals("fanOutLeft")) {
+    if(message.equals("1")) {
+      Serial.println("FAN OUT LEFT->ON");
+      mcp0.digitalWrite(FAN1OUT, HIGH);
+    } else {
+      Serial.println("FAN OUT LEFT->OFF");
+      mcp0.digitalWrite(FAN1OUT, LOW);      
+    }
+  }
+
+  
+  if (String(topic).equals("fanOutRight")) {
+    if(message.equals("1")) {
+      Serial.println("FAN OUT RIGHT->ON");
+      mcp0.digitalWrite(FAN2OUT, HIGH);
+    } else {
+      Serial.println("FAN OUT RIGHT->OFF");
+      mcp0.digitalWrite(FAN2OUT, LOW);      
+    }
+  }
+  
+  if (String(topic).equals("fanIn")) {
+    setFanIn(String(message).toInt());
+  }
+  
+  if (String(topic).equals("water_pump")) {
     if(message.equals("1")) {
       Serial.println("WATER->ON");
-      //mcp0.digitalWrite(WATER_PUMP, HIGH);
+      mcp0.digitalWrite(WATER_PUMP, HIGH);
     } else {
       Serial.println("WATER->OFF");
-      //mcp0.digitalWrite(WATER_PUMP, LOW);      
+      mcp0.digitalWrite(WATER_PUMP, LOW);      
     }
   }
   
@@ -231,6 +317,45 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+}
+
+void setFanIn(int duty) {
+   switch (duty) {
+    case 1:
+      Serial.print("FAN INPUT -> ON at");
+      digitalWrite(FAN1IN, LOW);
+      Serial.println("10 % PWM");   
+      analogWrite(FAN2IN, 102);
+      break;
+    case 2:
+      Serial.print("FAN INPUT -> ON at");
+      digitalWrite(FAN1IN, LOW);
+      Serial.println("20 % PWM");
+      analogWrite(FAN2IN, 205);
+      break;
+    case 3:
+      Serial.print("FAN INPUT -> ON at");
+      digitalWrite(FAN1IN, LOW);
+      Serial.println("40 % PWM");
+      analogWrite(FAN2IN, 410);
+      break;
+    case 4:
+      Serial.print("FAN INPUT -> ON at");
+      digitalWrite(FAN1IN, LOW);
+      Serial.println("70 % PWM");
+      analogWrite(FAN2IN, 714);
+      break;
+    case 5: 
+      Serial.print("FAN INPUT -> ON at");
+      digitalWrite(FAN1IN, LOW);
+      Serial.println("100 % PWM");
+      analogWrite(FAN2IN, 1024);
+      break;
+    default:
+      Serial.println("FAN INPUT -> OFF");
+      digitalWrite(FAN1IN, HIGH); // Relay-off
+      break;
+   }
 }
 
 float getDistance() {
@@ -305,66 +430,4 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
-
-  if (LIGHT.equals("ON")) {
-    if (PHASE.equals("GERMINATION")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("VEGETABLE_LOW")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("VEGETABLE_HIGH")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("FLOWERING_LOW")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-    }
-    if (PHASE.equals("FLOWERING_HIGH")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-    }
-  } else {
-    mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-    mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-    mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-  }
 }
