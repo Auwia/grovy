@@ -1,8 +1,7 @@
 /* * Author: Massimo Manganiello * */
 /* 16/05/2018: first development. * version: 1.0 */
 /* 17/06/2018: new core / feature. * version: 2.0 */
-#include <MySQL_Connection.h>
-#include <MySQL_Cursor.h>
+/* 21/06/2018: no mysql connection. * version: 3.0 */
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
 #include <Adafruit_MCP23017.h>
@@ -26,14 +25,6 @@ const char* mqttServer = "192.168.0.178";
 const int mqttPort = 1883;
 const char* mqttUser = "";
 const char* mqttPassword = "";
-
-// MYSQL
-char* host = "e73173-mysql.services.easyname.eu";
-IPAddress server_addr(185, 51, 11, 3);
-char user[] = "u112031db1";
-char password[] = "4i340So";
-MySQL_Connection conn((Client *)&clientWIFI);
-MySQL_Cursor *cur_mem;
 
 // MCP3008
 Adafruit_MCP3008 adc;
@@ -145,11 +136,6 @@ void setup() {
   mcp0.pinMode(13, OUTPUT);
   mcp0.pinMode(14, OUTPUT);
   mcp0.pinMode(15, OUTPUT);
-
-  // MYSQL
-  if (conn.connect(server_addr, 3306, user, password)) {
-    delay(1000);
-  } else Serial.println("Connection failed.");
 
   // MCP3008
   Serial.print("MCP3008 init...");
@@ -374,10 +360,11 @@ float getDistance() {
   Serial.print(timestamp + ": Distance: ");
   Serial.println(distance);
   Serial.print(timestamp + ": Recording distance...");
-  String INSERT_SQL = (String)"insert into u112031db1.mis_distance (timestamp, area, distance) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Distance\', " + distance + ")";
-  cur_mem = new MySQL_Cursor(&conn);
-  cur_mem->execute(INSERT_SQL.c_str());
-  delete cur_mem;
+  char result[8];
+  char* message = dtostrf(distance, 6, 2, result);
+  int length = strlen(message);
+  boolean retained = true;
+  client.publish("distance_result", (byte*)message, length, retained);
   Serial.println("done");
   return distance;
 }
@@ -386,10 +373,11 @@ float getWaterLevel() {
   float water_level = adc.readADC(0);
   Serial.println((String)timestamp + ": MCP3008_ADC_0: " + water_level); // water level
   Serial.print(timestamp + ": Recording data of water level...");
-  String UPDATE_SQL = (String)"update u112031db1.probe set status=" + water_level + " where name='water_level'";
-  cur_mem = new MySQL_Cursor(&conn);
-  cur_mem->execute(UPDATE_SQL.c_str());
-  delete cur_mem;
+  char result[8];
+  char* message = dtostrf(water_level, 6, 2, result);
+  int length = strlen(message);
+  boolean retained = true;
+  client.publish("water_level_result", (byte*)message, length, retained);
   Serial.println("done");
   return adc.readADC(0);
   return water_level;
@@ -399,10 +387,12 @@ float getLightSpectrum() {
   float light_spectrum = adc.readADC(2);
   Serial.println((String)timestamp + ": MCP3008_ADC_2: " + light_spectrum); // light spectrum
   Serial.println(timestamp + ": Recording data of light spectrum.");
-  String UPDATE_SQL = (String)"update u112031db1.probe set status=" + light_spectrum + " where name='light_spectrum'";
-  cur_mem = new MySQL_Cursor(&conn);
-  cur_mem->execute(UPDATE_SQL.c_str());
-  delete cur_mem;
+  char result[8];
+  char* message = dtostrf(light_spectrum, 6, 2, result);
+  int length = strlen(message);
+  boolean retained = true;
+  client.publish("light_spectrum_result", (byte*)message, length, retained);
+  Serial.println("done");
   return light_spectrum;
 }
 
@@ -410,10 +400,12 @@ int getMoisture() {
   int moisture = adc.readADC(1);
   Serial.println((String)timestamp + ": MCP3008_ADC_1: " + moisture); // moisture sensor
   Serial.println(timestamp + ": Recording data of moisture.");
-  String INSERT_SQL = (String)"insert into u112031db1.mis_soil (timestamp, area, moisture) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Moisture\', " + moisture + ")";
-  cur_mem = new MySQL_Cursor(&conn);
-  cur_mem->execute(INSERT_SQL.c_str());
-  delete cur_mem;
+  char result[8];
+  char* message = dtostrf(moisture, 6, 2, result);
+  int length = strlen(message);
+  boolean retained = true;
+  client.publish("moisture_result", (byte*)message, length, retained);
+  Serial.println("done");
   return moisture;
 }
 
@@ -430,66 +422,4 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
- 
-  if (LIGHT.equals("ON")) {
-    if (PHASE.equals("GERMINATION")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("VEGETABLE_LOW")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("VEGETABLE_HIGH")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, HIGH);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-    }
-    if (PHASE.equals("FLOWERING_LOW")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-    }
-    if (PHASE.equals("FLOWERING_HIGH")) {
-      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-    }
-  } else {
-    mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-    mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-    mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-  }
 }
