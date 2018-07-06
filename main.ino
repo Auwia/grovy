@@ -9,6 +9,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>
+#include <PZEM004T.h>
+
+// PZEM004T
+PZEM004T pzem(&Serial1);
+IPAddress ip(192,168,1,1);
 
 // PHASE : (GERMINATION, VEGETABLE_LOW, VEGETABLE_HIGH, FLOWERING_LOW, FLOWERING_HIGH)
 const char* PHASE = "GERMINATION";
@@ -74,6 +79,9 @@ PubSubClient client(espClient);
 void setup() { 
   Serial.begin(115200); 
   
+  // PZEM004T
+  pzem.setAddress(ip);
+  
   WiFi.begin(ssid, password_wifi); 
   Serial.print("Connecting to WiFi.");
   while (WiFi.status() != WL_CONNECTED) {
@@ -97,7 +105,6 @@ void setup() {
     }
   }
  
-  client.publish("esp/test", "Hello from ESP8266");
   client.subscribe("water");
   client.subscribe("light");
   client.subscribe("phase");
@@ -114,6 +121,7 @@ void setup() {
   client.subscribe("peltier");
   client.subscribe("water_pump");
   client.subscribe("dehumidifier");
+  client.subscribe("energy");
 
     // TEMPERATURE
   sensors.begin();
@@ -301,6 +309,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     int moisture = getMoisture();
     Serial.println(moisture);
   }
+  if (String(topic).equals("energy")) {
+    Serial.print("Energy: ");
+    String energy_res = getEnergy();
+    Serial.println(energy_res);
+  }
   Serial.println();
   Serial.println("-----------------------");
 }
@@ -409,6 +422,38 @@ int getMoisture() {
   return moisture;
 }
 
+String getEnergy() {
+  float v = pzem.voltage(ip);
+  if (v < 0.0) v = 0.0;
+  Serial.print(v);Serial.print("V; ");
+
+  float i = pzem.current(ip);
+  if(i >= 0.0){ Serial.print(i);Serial.print("A; "); }
+  
+  float p = pzem.power(ip);
+  if(p >= 0.0){ Serial.print(p);Serial.print("W; "); }
+  
+  float e = pzem.energy(ip);
+  if(e >= 0.0){ Serial.print(e);Serial.print("Wh; "); }
+
+  Serial.println();
+  
+  char result[8];
+  char* voltage_res = dtostrf(v, 6, 2, result);
+  char* current_res = dtostrf(i, 6, 2, result);
+  char* watt_res = dtostrf(p, 6, 2, result);
+  char* count_watt_res = dtostrf(e, 6, 2, result);
+  String message = String(voltage_res) + "|" + String(current_res) + "|" + String(watt_res) + "|" + String(count_watt_res);
+  char charBuf[50];
+  int length = message.length();
+  message.toCharArray(charBuf, 50);
+  boolean retained = true;
+  client.publish("energy_result", (byte*)message.c_str(), length, retained);
+  
+  return String(message);
+}
+
+
 void loop() {
   client.loop();
 
@@ -424,64 +469,64 @@ void loop() {
   http.end();
  
  if (LIGHT == "ON") {
-+    if (PHASE == "GERMINATION") {
-+      mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-+    }
-+    if (PHASE == "VEGETABLE_LOW") {
-+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-+    }
-+    if (PHASE == "VEGETABLE_HIGH") {
-+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, HIGH);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, HIGH);
-+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-+    }
-+    if (PHASE == "FLOWERING_LOW") {
-+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-+      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-+      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-+      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-+    }
-+    if (PHASE == "FLOWERING_HIGH") {
-+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
-+      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-+      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
-+      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
-+    }
-+  } else {
-+    mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-+    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-+    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-+    mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
-+    mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
-+    mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-+    mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
-+    mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
-+  }
+    if (PHASE == "GERMINATION") {
+      mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
+    }
+    if (PHASE == "VEGETABLE_LOW") {
+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
+    }
+    if (PHASE == "VEGETABLE_HIGH") {
+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+      mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, HIGH);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, HIGH);
+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
+    }
+    if (PHASE == "FLOWERING_LOW") {
+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
+      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
+      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
+    }
+    if (PHASE == "FLOWERING_HIGH") {
+      mcp0.digitalWrite(LED_WARM_WHITE, LOW);
+      mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+      mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
+      mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
+      mcp0.digitalWrite(LED_DEEP_RED_1, HIGH);
+      mcp0.digitalWrite(LED_DEEP_RED_2, HIGH);
+    }
+  } else {
+    mcp0.digitalWrite(LED_WARM_WHITE, LOW);
+    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
+    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
+    mcp0.digitalWrite(LED_BRIGHT_BLUE_1, LOW);
+    mcp0.digitalWrite(LED_BRIGHT_BLUE_2, LOW);
+    mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
+    mcp0.digitalWrite(LED_DEEP_RED_1, LOW);
+    mcp0.digitalWrite(LED_DEEP_RED_2, LOW);
+  }
 }
