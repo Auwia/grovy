@@ -242,7 +242,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   
   if (String(topic).equals("fanIn")) {
-    setFanIn(String(message).toInt());
+    setFanIn((char)payload[0]);
   }
   
   if (String(topic).equals("water_pump")) {
@@ -320,39 +320,39 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void setFanIn(int duty) {
    switch (duty) {
-    case 1:
+    case '1':
       Serial.print("FAN INPUT -> ON at");
-      digitalWrite(FAN1IN, LOW);
+      mcp0.digitalWrite(FAN1IN, HIGH);
       Serial.println("10 % PWM");   
       analogWrite(FAN2IN, 102);
       break;
-    case 2:
+    case '2':
       Serial.print("FAN INPUT -> ON at");
-      digitalWrite(FAN1IN, LOW);
+      mcp0.digitalWrite(FAN1IN, LOW);
       Serial.println("20 % PWM");
       analogWrite(FAN2IN, 205);
       break;
-    case 3:
+    case '3':
       Serial.print("FAN INPUT -> ON at");
-      digitalWrite(FAN1IN, LOW);
+      mcp0.digitalWrite(FAN1IN, LOW);
       Serial.println("40 % PWM");
       analogWrite(FAN2IN, 410);
       break;
-    case 4:
+    case '4':
       Serial.print("FAN INPUT -> ON at");
-      digitalWrite(FAN1IN, LOW);
+      mcp0.digitalWrite(FAN1IN, LOW);
       Serial.println("70 % PWM");
       analogWrite(FAN2IN, 714);
       break;
-    case 5: 
+    case '5': 
       Serial.print("FAN INPUT -> ON at");
-      digitalWrite(FAN1IN, LOW);
+      mcp0.digitalWrite(FAN1IN, LOW);
       Serial.println("100 % PWM");
-      analogWrite(FAN2IN, 1024);
+      // analogWrite(FAN2IN, 1024);
       break;
     default:
       Serial.println("FAN INPUT -> OFF");
-      digitalWrite(FAN1IN, HIGH); // Relay-off
+      mcp0.digitalWrite(FAN1IN, HIGH); // Relay-off
       break;
    }
 }
