@@ -454,7 +454,7 @@ float getTemperature() {
  int length = strlen(message);
  boolean retained = true;
  client.publish("temperature_result", (byte*)message, length, retained);
- return light_spectrum;
+ return temperature;
 }
 
 float getLightSpectrum() {
