@@ -453,7 +453,7 @@ float getTemperature() {
  char* message = dtostrf(temperature, 6, 2, result);
  int length = strlen(message);
  boolean retained = true;
- client.publish("temperature", (byte*)message, length, retained);
+ client.publish("temperature_result", (byte*)message, length, retained);
  return light_spectrum;
 }
 
