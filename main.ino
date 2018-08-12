@@ -47,7 +47,7 @@ long duration;
 int distance;
 
 // TEMPERATURE
-#define ONE_WIRE_BUS 10 //Pin to which is attached a temperature sensor 
+#define ONE_WIRE_BUS 15 //Pin to which is attached a temperature sensor 
 #define ONE_WIRE_MAX_DEV 1 //The maximum number of devices 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -124,6 +124,7 @@ void setup() {
   client.subscribe("energy");
   client.subscribe("test");
   client.subscribe("testSingle");
+  client.subscribe("temperature");
 
     // TEMPERATURE
   sensors.begin();
@@ -343,6 +344,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     int light_spectrum = getLightSpectrum();
     Serial.println(light_spectrum);
   }
+  if (String(topic).equals("temperature")) {
+    Serial.print("temperature: ");
+    int light_spectrum = getLightSpectrum();
+    Serial.println(light_spectrum);
+  }
   if (String(topic).equals("moisture")) {
     Serial.print("moisture: ");
     int moisture = getMoisture();
@@ -433,6 +439,22 @@ float getWaterLevel() {
   Serial.println("done");
   return adc.readADC(0);
   return water_level;
+}
+
+float getTemperature() {
+ // TEMPERATURE
+ Serial.print((String)timestamp + "Requesting temperatures...");
+ sensors.requestTemperatures(); // Send the command to get temperatures
+ Serial.println("DONE");
+ Serial.print((String)timestamp + "Temperature for the device 1 (index 0) is: ");
+ float temperature = sensors.getTempCByIndex(0);
+ Serial.println(temperature);
+ char result[8];
+ char* message = dtostrf(temperature, 6, 2, result);
+ int length = strlen(message);
+ boolean retained = true;
+ client.publish("temperature", (byte*)message, length, retained);
+ return light_spectrum;
 }
 
 float getLightSpectrum() {
