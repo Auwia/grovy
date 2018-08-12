@@ -346,8 +346,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if (String(topic).equals("temperature")) {
     Serial.print("temperature: ");
-    int light_spectrum = getLightSpectrum();
-    Serial.println(light_spectrum);
+    float temperature = getTemperature();
+    Serial.println(temperature);
   }
   if (String(topic).equals("moisture")) {
     Serial.print("moisture: ");
