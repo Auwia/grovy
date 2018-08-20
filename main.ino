@@ -71,6 +71,7 @@ const int LED_ROYAL_BLUE = 12;
 const int LED_WARM_WHITE = 13;
 const int HEATER_FAN = 14;
 const int HEATER = 15;
+const int FAN_IN_PWM = 16; // only for new feature PWM
 
 String timestamp;
  
