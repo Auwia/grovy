@@ -523,45 +523,4 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
-
-  if (PHASE == "GERMINATION") {
-    mcp0.digitalWrite(LED_WARM_WHITE, LOW);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE, HIGH);
-    mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-    mcp0.digitalWrite(LED_DEEP_RED, HIGH);
-  }
-  if (PHASE == "VEGETABLE_LOW") {
-    mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-    mcp0.digitalWrite(LED_DEEP_RED, HIGH);
-  }
-  if (PHASE == "VEGETABLE_HIGH") {
-    mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE, LOW);
-    mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-    mcp0.digitalWrite(LED_DEEP_RED, HIGH);
-  }
-  if (PHASE == "FLOWERING_LOW") {
-    mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE, HIGH);
-    mcp0.digitalWrite(LED_BRIGHT_RED, LOW);
-    mcp0.digitalWrite(LED_DEEP_RED, LOW);
-  }
-  if (PHASE == "FLOWERING_HIGH") {
-    mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
-    mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, LOW);
-    mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
-    mcp0.digitalWrite(LED_BRIGHT_BLUE, HIGH);
-    mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
-    mcp0.digitalWrite(LED_DEEP_RED, LOW);
-  }
 }
