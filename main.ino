@@ -69,7 +69,7 @@ const int LED_DEEP_RED = 10;
 const int LED_BRIGHT_RED = 11;
 const int LED_ROYAL_BLUE = 12;
 const int LED_WARM_WHITE = 13;
-const int HEATER FAN = 14;
+const int HEATER_FAN = 14;
 const int HEATER = 15;
 
 String timestamp;
