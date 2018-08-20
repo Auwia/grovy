@@ -276,7 +276,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       mcp0.digitalWrite(LED_BRIGHT_BLUE, LOW);
       mcp0.digitalWrite(LED_ROYAL_BLUE, LOW);
       mcp0.digitalWrite(EMPTY, LOW);
-      mcp0.digitalWrite(EMPTY_II, LOW);
+      mcp0.digitalWrite(HEATER_FAN, LOW);
       Serial.println("TEST->OFF");
     } else {
       Serial.println("TEST->ON");
@@ -295,7 +295,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       mcp0.digitalWrite(LED_BRIGHT_BLUE, HIGH);
       mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
       mcp0.digitalWrite(EMPTY, HIGH);
-      mcp0.digitalWrite(EMPTY_II, HIGH);
+      mcp0.digitalWrite(HEATER_FAN, HIGH);
       Serial.println("TEST->OFF");      
     }     
   }
