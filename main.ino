@@ -30,14 +30,14 @@ const char* LIGHT = "ON";
 // WIFI
 const char* ssid = "UPCA9E82C2";
 const char* password_wifi =  "tp3Ya2mkhztk";
-WiFiClient espClient;
+WiFiClient clientWIFI;
 
 // MQTT client
 const char* mqttServer = "192.168.0.178";
 const int mqttPort = 1883;
 const char* mqttUser = "";
 const char* mqttPassword = "";
-PubSubClient client(espClient);
+PubSubClient clientMQTT(clientWIFI);
 
 // MCP3008
 Adafruit_MCP3008 adc;
@@ -105,39 +105,39 @@ void setup() {
   Serial.println("ok.");
  
   // MQTT client
-  client.setServer(mqttServer, mqttPort);
-  client.setCallback(callback);
+  clientMQTT.setServer(mqttServer, mqttPort);
+  clientMQTT.setCallback(callback);
   Serial.print("Connecting to MQTT.");
-  while (!client.connected()) {
+  while (!clientMQTT.connected()) {
     Serial.print(".");
-    if (client.connect("ESP8266Client", mqttUser, mqttPassword )) {
+    if (clientMQTT.connect("ESP8266Client", mqttUser, mqttPassword )) {
       Serial.println("ok.");  
     } else { 
       Serial.println("failed with state: ");
-      Serial.print(client.state());
+      Serial.print(clientMQTT.state());
       delay(2000); 
     }
   }
-  client.subscribe("water");
-  client.subscribe("light");
-  client.subscribe("phase");
-  client.subscribe("distance");
-  client.subscribe("water_level");
-  client.subscribe("light_spectrum");
-  client.subscribe("moisture");
-  client.subscribe("fanIn");
-  client.subscribe("fanOut");
-  client.subscribe("coolLamp");
-  client.subscribe("co2");
-  client.subscribe("heater");
-  client.subscribe("peltier");
-  client.subscribe("water_pump");
-  client.subscribe("dehumidifier");
-  client.subscribe("energy");
-  client.subscribe("test");
-  client.subscribe("testSingle");
-  client.subscribe("testSingleOff");
-  client.subscribe("temperature");
+  clientMQTT.subscribe("water");
+  clientMQTT.subscribe("light");
+  clientMQTT.subscribe("phase");
+  clientMQTT.subscribe("distance");
+  clientMQTT.subscribe("water_level");
+  clientMQTT.subscribe("light_spectrum");
+  clientMQTT.subscribe("moisture");
+  clientMQTT.subscribe("fanIn");
+  clientMQTT.subscribe("fanOut");
+  clientMQTT.subscribe("coolLamp");
+  clientMQTT.subscribe("co2");
+  clientMQTT.subscribe("heater");
+  clientMQTT.subscribe("peltier");
+  clientMQTT.subscribe("water_pump");
+  clientMQTT.subscribe("dehumidifier");
+  clientMQTT.subscribe("energy");
+  clientMQTT.subscribe("test");
+  clientMQTT.subscribe("testSingle");
+  clientMQTT.subscribe("testSingleOff");
+  clientMQTT.subscribe("temperature");
 
   // TEMPERATURE
   sensors.begin();
@@ -439,7 +439,7 @@ float getDistance() {
   char* message = dtostrf(distance, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
-  client.publish("distance_result", (byte*)message, length, retained);
+  clientMQTT.publish("distance_result", (byte*)message, length, retained);
   Serial.println("done");
   return distance;
 }
@@ -452,7 +452,7 @@ float getWaterLevel() {
   char* message = dtostrf(water_level, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
-  client.publish("water_level_result", (byte*)message, length, retained);
+  clientMQTT.publish("water_level_result", (byte*)message, length, retained);
   Serial.println("done");
   return adc.readADC(0);
   return water_level;
@@ -470,7 +470,7 @@ float getTemperature() {
  char* message = dtostrf(temperature, 6, 2, result);
  int length = strlen(message);
  boolean retained = true;
- client.publish("temperature_result", (byte*)message, length, retained);
+ clientMQTT.publish("temperature_result", (byte*)message, length, retained);
  return temperature;
 }
 
@@ -482,7 +482,7 @@ float getLightSpectrum() {
   char* message = dtostrf(light_spectrum, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
-  client.publish("light_spectrum_result", (byte*)message, length, retained);
+  clientMQTT.publish("light_spectrum_result", (byte*)message, length, retained);
   Serial.println("done");
   return light_spectrum;
 }
@@ -495,7 +495,7 @@ int getMoisture() {
   char* message = dtostrf(moisture, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
-  client.publish("moisture_result", (byte*)message, length, retained);
+  clientMQTT.publish("moisture_result", (byte*)message, length, retained);
   Serial.println("done");
   return moisture;
 }
@@ -526,29 +526,29 @@ String getEnergy() {
   int length = message.length();
   message.toCharArray(charBuf, 50);
   boolean retained = true;
-  client.publish("energy_result", (byte*)message.c_str(), length, retained);
+  clientMQTT.publish("energy_result", (byte*)message.c_str(), length, retained);
   
   return String(message);
 }
 
 void loop() {
-  // MQTT client
-  client.loop();
-  
   // REMOTE UPDATE OTA
   httpServer.handleClient();
  
     // TIME TIMESTAMP
-  HTTPClient http;
-  http.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");
-  int httpCode = http.GET();
+  HTTPClient clientHTTP;
+  clientHTTP.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");
+  int httpCode = clientHTTP.GET();
   if (httpCode > 0) {
-    timestamp = http.getString();
+    timestamp = clientHTTP.getString();
   } else {
-    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    Serial.printf("[HTTP] GET... failed, error: %s\n", clientHTTP.errorToString(httpCode).c_str());
   }
-  http.end();
+  clientHTTP.end();
  
+ // MQTT client
+  clientMQTT.loop();
+  
   // BLUE LED
   digitalWrite(LED, !digitalRead(LED));
   delay(1000);
