@@ -48,7 +48,7 @@ Adafruit_MCP3008 adc;
 
 // RANGE SENSOR
 const int trigPin = 0; //D4
-const int echoPin = 2; //D3
+const int echoPin = 0; //D3
 long duration;
 int distance;
 
@@ -91,10 +91,7 @@ ESP8266HTTPUpdateServer httpUpdater;
 
 void setup() {
   Serial.begin(115200);
-  
-  // BLUE LED
-  pinMode(LED, OUTPUT);
-  
+    
   // PZEM004T
   pzem.setAddress(ip);
   
@@ -174,7 +171,10 @@ void setup() {
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.println("OK");
- 
+
+  // BLUE LED
+  pinMode(LED, OUTPUT);
+
   // REMOTE UPDATE OTA
   MDNS.begin(host);
   httpUpdater.setup(&httpServer);
