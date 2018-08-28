@@ -4,6 +4,7 @@
 /* 21/06/2018: no mysql connection. * version: 3.0 */
 /* 28/07/2018: 16ch. relay board. driver MCP23017 * version: 3.1 */
 /* 20/08/2018: clean up * version: 3.2 */
+/* 28/08/2018: loop() -> add sleep 1sec., blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -11,6 +12,9 @@
 #include <DallasTemperature.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266HTTPUpdateServer.h>
 #include <PubSubClient.h>
 #include <PZEM004T.h>
 
@@ -26,13 +30,14 @@ const char* LIGHT = "ON";
 // WIFI
 const char* ssid = "UPCA9E82C2";
 const char* password_wifi =  "tp3Ya2mkhztk";
-WiFiClient clientWIFI;
+WiFiClient espClient;
 
 // MQTT client
 const char* mqttServer = "192.168.0.178";
 const int mqttPort = 1883;
 const char* mqttUser = "";
 const char* mqttPassword = "";
+PubSubClient client(espClient);
 
 // MCP3008
 Adafruit_MCP3008 adc;
@@ -46,6 +51,9 @@ const int trigPin = 0; //D4
 const int echoPin = 2; //D3
 long duration;
 int distance;
+
+// BLUE LED
+int LED = 2;
 
 // TEMPERATURE
 #define ONE_WIRE_BUS 15 //Pin to which is attached a temperature sensor 
@@ -73,17 +81,27 @@ const int HEATER_FAN = 14;
 const int HEATER = 15;
 const int FAN_IN_PWM = 16; // only for new feature PWM
 
+// BLUE LED
+int LED = 2;
+
+// TIMESTAMP
 String timestamp;
- 
-WiFiClient espClient;
-PubSubClient client(espClient);
- 
-void setup() { 
-  Serial.begin(115200); 
+
+// REMOTE UPDATE OTA
+const char* host = "esp8266-webupdate";
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
+void setup() {
+  Serial.begin(115200);
+  
+  // BLUE LED
+  pinMode(LED, OUTPUT);
   
   // PZEM004T
   pzem.setAddress(ip);
   
+  // WIFI
   WiFi.begin(ssid, password_wifi); 
   Serial.print("Connecting to WiFi.");
   while (WiFi.status() != WL_CONNECTED) {
@@ -92,9 +110,9 @@ void setup() {
   }
   Serial.println("ok.");
  
+  // MQTT client
   client.setServer(mqttServer, mqttPort);
   client.setCallback(callback);
-
   Serial.print("Connecting to MQTT.");
   while (!client.connected()) {
     Serial.print(".");
@@ -106,7 +124,6 @@ void setup() {
       delay(2000); 
     }
   }
- 
   client.subscribe("water");
   client.subscribe("light");
   client.subscribe("phase");
@@ -128,7 +145,7 @@ void setup() {
   client.subscribe("testSingleOff");
   client.subscribe("temperature");
 
-    // TEMPERATURE
+  // TEMPERATURE
   sensors.begin();
 
   // MCP23017
@@ -160,7 +177,13 @@ void setup() {
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.println("OK");
-
+ 
+  // REMOTE UPDATE OTA
+  MDNS.begin(host);
+  httpUpdater.setup(&httpServer);
+  httpServer.begin();
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
 }
  
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -512,7 +535,12 @@ String getEnergy() {
 }
 
 void loop() {
+  // MQTT client
   client.loop();
+  
+  // REMOTE UPDATE OTA
+  httpServer.handleClient();
+ 
     // TIME TIMESTAMP
   HTTPClient http;
   http.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");
@@ -523,4 +551,8 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
   }
   http.end();
+ 
+  // BLUE LED
+  digitalWrite(LED, !digitalRead(LED));
+  delay(1000);
 }
