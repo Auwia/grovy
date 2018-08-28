@@ -52,9 +52,6 @@ const int echoPin = 2; //D3
 long duration;
 int distance;
 
-// BLUE LED
-int LED = 2;
-
 // TEMPERATURE
 #define ONE_WIRE_BUS 15 //Pin to which is attached a temperature sensor 
 #define ONE_WIRE_MAX_DEV 1 //The maximum number of devices 
