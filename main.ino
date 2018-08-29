@@ -4,7 +4,7 @@
 /* 21/06/2018: no mysql connection. * version: 3.0 */
 /* 28/07/2018: 16ch. relay board. driver MCP23017 * version: 3.1 */
 /* 20/08/2018: clean up * version: 3.2 */
-/* 28/08/2018: loop() -> add sleep 1sec., blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
+/* 28/08/2018: blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -138,7 +138,8 @@ void setup() {
   clientMQTT.subscribe("testSingle");
   clientMQTT.subscribe("testSingleOff");
   clientMQTT.subscribe("temperature");
-
+  clientMQTT.subscribe("built-in_led");
+  
   // TEMPERATURE
   sensors.begin();
 
@@ -160,7 +161,23 @@ void setup() {
   mcp0.pinMode(13, OUTPUT);
   mcp0.pinMode(14, OUTPUT);
   mcp0.pinMode(15, OUTPUT);
-
+  mcp0.digitalWrite(FAN_IN, HIGH);
+  mcp0.digitalWrite(FAN_OUT, HIGH);
+  mcp0.digitalWrite(COOL_LAMP, HIGH);
+  mcp0.digitalWrite(CO2, HIGH);
+  mcp0.digitalWrite(HEATER, HIGH);
+  mcp0.digitalWrite(PELTIER, HIGH);
+  mcp0.digitalWrite(WATER_PUMP, HIGH);
+  mcp0.digitalWrite(DEHUMIDIFIER, HIGH);
+  mcp0.digitalWrite(LED_WARM_WHITE, HIGH);
+  mcp0.digitalWrite(LED_FULL_SPECTRUM_UV, HIGH);
+  mcp0.digitalWrite(LED_DEEP_RED, HIGH);
+  mcp0.digitalWrite(LED_BRIGHT_RED, HIGH);
+  mcp0.digitalWrite(LED_BRIGHT_BLUE, HIGH);
+  mcp0.digitalWrite(LED_ROYAL_BLUE, HIGH);
+  mcp0.digitalWrite(EMPTY, HIGH);
+  mcp0.digitalWrite(HEATER_FAN, HIGH);
+      
   // MCP3008
   Serial.print("MCP3008 init...");
   adc.begin(CLOCK_PIN, MOSI_PIN, MISO_PIN, CS_PIN);
@@ -171,9 +188,6 @@ void setup() {
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.println("OK");
-
-  // BLUE LED
-  pinMode(LED, OUTPUT);
 
   // REMOTE UPDATE OTA
   MDNS.begin(host);
@@ -266,6 +280,20 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } else {
       Serial.println("WATER->OFF");
       mcp0.digitalWrite(WATER_PUMP, HIGH);      
+    }
+  }
+
+  
+  if (String(topic).equals("built-in_led")) {
+    // BLUE LED
+    pinMode(LED, OUTPUT);
+    digitalWrite(LED, HIGH);
+    if(message.equals("1")) {
+      Serial.println("BUILT-IN LED->ON");
+      digitalWrite(LED, LOW);
+    } else {
+      Serial.println("BUILT-IN LED->OFF");
+      digitalWrite(LED, HIGH);      
     }
   }
 
@@ -532,6 +560,9 @@ String getEnergy() {
 }
 
 void loop() {
+  // MQTT client
+  clientMQTT.loop();
+  
   // REMOTE UPDATE OTA
   httpServer.handleClient();
  
@@ -545,11 +576,4 @@ void loop() {
     Serial.printf("[HTTP] GET... failed, error: %s\n", clientHTTP.errorToString(httpCode).c_str());
   }
   clientHTTP.end();
- 
- // MQTT client
-  clientMQTT.loop();
-  
-  // BLUE LED
-  digitalWrite(LED, !digitalRead(LED));
-  delay(1000);
 }
