@@ -5,6 +5,7 @@
 /* 28/07/2018: 16ch. relay board. driver MCP23017 * version: 3.1 */
 /* 20/08/2018: clean up * version: 3.2 */
 /* 28/08/2018: blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
+/* 01/09/2018: MQTT reconnect in case of lost connection, remote debug by telnet * version: 3.4 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -16,7 +17,9 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <PubSubClient.h>
+#include <SPI.h>
 #include <PZEM004T.h>
+#include <RemoteDebug.h>
 
 // PZEM004T
 PZEM004T pzem(&Serial1);
@@ -31,6 +34,7 @@ const char* LIGHT = "ON";
 const char* ssid = "UPCA9E82C2";
 const char* password_wifi =  "tp3Ya2mkhztk";
 WiFiClient clientWIFI;
+WiFiServer server(23);
 
 // MQTT client
 const char* mqttServer = "192.168.0.178";
@@ -89,12 +93,15 @@ const char* host = "esp8266-webupdate";
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
+// TELNET REMOTE DEBUG
+bool RemoteSerial = true; //true = Remote and local serial, false = local serial only
+RemoteDebug Debug;
+#define MAX_SRV_CLIENTS 1
+WiFiClient serverClients[MAX_SRV_CLIENTS];
+
 void setup() {
   Serial.begin(115200);
-    
-  // PZEM004T
-  pzem.setAddress(ip);
-  
+
   // WIFI
   WiFi.begin(ssid, password_wifi); 
   Serial.print("Connecting to WiFi.");
@@ -103,42 +110,27 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("ok.");
- 
+
   // MQTT client
   clientMQTT.setServer(mqttServer, mqttPort);
   clientMQTT.setCallback(callback);
-  Serial.print("Connecting to MQTT.");
-  while (!clientMQTT.connected()) {
-    Serial.print(".");
-    if (clientMQTT.connect("ESP8266Client", mqttUser, mqttPassword )) {
-      Serial.println("ok.");  
-    } else { 
-      Serial.println("failed with state: ");
-      Serial.print(clientMQTT.state());
-      delay(2000); 
-    }
-  }
-  clientMQTT.subscribe("water");
-  clientMQTT.subscribe("light");
-  clientMQTT.subscribe("phase");
-  clientMQTT.subscribe("distance");
-  clientMQTT.subscribe("water_level");
-  clientMQTT.subscribe("light_spectrum");
-  clientMQTT.subscribe("moisture");
-  clientMQTT.subscribe("fanIn");
-  clientMQTT.subscribe("fanOut");
-  clientMQTT.subscribe("coolLamp");
-  clientMQTT.subscribe("co2");
-  clientMQTT.subscribe("heater");
-  clientMQTT.subscribe("peltier");
-  clientMQTT.subscribe("water_pump");
-  clientMQTT.subscribe("dehumidifier");
-  clientMQTT.subscribe("energy");
-  clientMQTT.subscribe("test");
-  clientMQTT.subscribe("testSingle");
-  clientMQTT.subscribe("testSingleOff");
-  clientMQTT.subscribe("temperature");
-  clientMQTT.subscribe("built-in_led");
+
+  // REMOTE UPDATE OTA
+  MDNS.begin(host);
+  httpUpdater.setup(&httpServer);
+  httpServer.begin();
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%d.local/update in your browser\n", host);
+
+  // TELNET REMOTE DEBUG
+  MDNS.addService("telnet", "tcp", 23);
+  Debug.begin(host); 
+  Debug.setSerialEnabled(true);
+  Debug.setResetCmdEnabled(true); // Enable the reset command
+  rdebugIln("TELNET REMOTE DEBUG...ok!");
+  
+  // PZEM004T
+  pzem.setAddress(ip);
   
   // TEMPERATURE
   sensors.begin();
@@ -180,28 +172,29 @@ void setup() {
       
   // MCP3008
   Serial.print("MCP3008 init...");
+  rdebugI("MCP3008 init...");
   adc.begin(CLOCK_PIN, MOSI_PIN, MISO_PIN, CS_PIN);
   Serial.println("OK");
+  rdebugIln("OK");
 
   // RANGE SENSOR
   Serial.print("HC-SR04 UltraSonic init...");
+  rdebugI("HC-SR04 UltraSonic init...");
   pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.println("OK");
+  rdebugIln("OK");
 
-  // REMOTE UPDATE OTA
-  MDNS.begin(host);
-  httpUpdater.setup(&httpServer);
-  httpServer.begin();
-  MDNS.addService("http", "tcp", 80);
-  Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+  delay(1500);
 }
  
 void callback(char* topic, byte* payload, unsigned int length) {
   String message;
   Serial.print("Message arrived in topic: ");
+  rdebugD("Message arrived in topic: ");
   Serial.println(topic);
   Serial.print("Message:");
+  rdebugDln("Message:");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
     message += (char)payload[i];
@@ -212,9 +205,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("dehumidifier")) {
     if(message.equals("1")) {
       Serial.println("DEHUMIDIFIER->ON");
+      rdebugDln("DEHUMIDIFIER->ON");
       mcp0.digitalWrite(DEHUMIDIFIER, LOW);
     } else {
       Serial.println("DEHUMIDIFIER->OFF");
+      rdebugDln("DEHUMIDIFIER->OFF");
       mcp0.digitalWrite(DEHUMIDIFIER, HIGH);      
     }
   }
@@ -222,9 +217,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("peltier")) {
     if(message.equals("1")) {
       Serial.println("PELTIER->ON");
+      rdebugDln("PELTIER->ON");
       mcp0.digitalWrite(PELTIER, LOW);
     } else {
       Serial.println("PELTIER->OFF");
+      rdebugDln("PELTIER->OFF");
       mcp0.digitalWrite(PELTIER, HIGH);      
     }
   }
@@ -232,9 +229,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("heater")) {
     if(message.equals("1")) {
       Serial.println("HEATER->ON");
+      rdebugDln("HEATER->ON");
       mcp0.digitalWrite(HEATER, LOW);
     } else {
       Serial.println("HEATER->OFF");
+      rdebugDln("HEATER->OFF");
       mcp0.digitalWrite(HEATER, HIGH);      
     }
   }
@@ -242,9 +241,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("co2")) {
     if(message.equals("1")) {
       Serial.println("CO2->ON");
+      rdebugDln("CO2->ON");
       mcp0.digitalWrite(CO2, LOW);
     } else {
       Serial.println("CO2->OFF");
+      rdebugDln("CO2->OFF");
       mcp0.digitalWrite(CO2, HIGH);      
     }
   }
@@ -252,9 +253,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("coolLamp")) {
     if(message.equals("1")) {
       Serial.println("COOL LAMP->ON");
+      rdebugDln("COOL LAMP->ON");
       mcp0.digitalWrite(COOL_LAMP, LOW);
     } else {
       Serial.println("COOL_LAMP->OFF");
+      rdebugDln("COOL_LAMP->OFF");
       mcp0.digitalWrite(COOL_LAMP, HIGH);      
     }
   }
@@ -262,9 +265,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("fanOut")) {
     if(message.equals("1")) {
       Serial.println("FAN OUT->ON");
+      rdebugDln("FAN OUT->ON");
       mcp0.digitalWrite(FAN_OUT, LOW);
     } else {
       Serial.println("FAN OUT->OFF");
+      rdebugDln("FAN OUT->OFF");
       mcp0.digitalWrite(FAN_OUT, HIGH);      
     }
   }
@@ -276,9 +281,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("water_pump")) {
     if(message.equals("1")) {
       Serial.println("WATER->ON");
+      rdebugDln("WATER->ON");
       mcp0.digitalWrite(WATER_PUMP, LOW);
     } else {
       Serial.println("WATER->OFF");
+      rdebugDln("WATER->OFF");
       mcp0.digitalWrite(WATER_PUMP, HIGH);      
     }
   }
@@ -290,26 +297,31 @@ void callback(char* topic, byte* payload, unsigned int length) {
     digitalWrite(LED, HIGH);
     if(message.equals("1")) {
       Serial.println("BUILT-IN LED->ON");
+      rdebugDln("BUILT-IN LED->ON");
       digitalWrite(LED, LOW);
     } else {
       Serial.println("BUILT-IN LED->OFF");
+      rdebugDln("BUILT-IN LED->OFF");
       digitalWrite(LED, HIGH);      
     }
   }
 
   if (String(topic).equals("testSingle")) {
     Serial.println("TEST PIN: " + message + " ->ON");
+    rdebugDln("TEST PIN: %d ->ON", message.c_str());
     mcp0.digitalWrite(message.toInt(), LOW);
   }
   
   if (String(topic).equals("testSingleOff")) {
     Serial.println("TEST PIN: " + message + " ->OFF");
+    rdebugDln("TEST PIN: %d ->OFF", message.c_str());
     mcp0.digitalWrite(message.toInt(), HIGH);
   }
 
   if (String(topic).equals("test")) {
     if(message.equals("1")) {
       Serial.println("TEST->ON");
+      rdebugDln("TEST->ON");
       mcp0.digitalWrite(FAN_IN, LOW);
       mcp0.digitalWrite(FAN_OUT, LOW);
       mcp0.digitalWrite(COOL_LAMP, LOW);
@@ -327,8 +339,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
       mcp0.digitalWrite(EMPTY, LOW);
       mcp0.digitalWrite(HEATER_FAN, LOW);
       Serial.println("TEST->OFF");
+      rdebugDln("TEST->OFF");
     } else {
       Serial.println("TEST->ON");
+      rdebugDln("TEST->ON");
       mcp0.digitalWrite(FAN_IN, HIGH);
       mcp0.digitalWrite(FAN_OUT, HIGH);
       mcp0.digitalWrite(COOL_LAMP, HIGH);
@@ -346,6 +360,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       mcp0.digitalWrite(EMPTY, HIGH);
       mcp0.digitalWrite(HEATER_FAN, HIGH);
       Serial.println("TEST->OFF");      
+      rdebugDln("TEST->OFF");
     }     
   }
      
@@ -354,50 +369,65 @@ void callback(char* topic, byte* payload, unsigned int length) {
       // PHASE : (0: GERMINATION, 1: VEGETABLE_LOW, 2: VEGETABLE_HIGH, 3: FLOWERING_LOW, 4: FLOWERING_HIGH)
       case '0':
         Serial.println("PHASE=GERMINATION");
+        rdebugDln("PHASE=GERMINATION");
         PHASE = "GERMINATION";
         break;
       case '1':
         Serial.println("PHASE=VEGETABLE_LOW");
+        rdebugDln("PHASE=VEGETABLE_LOW");
         PHASE = "VEGETABLE_LOW";
         break;
       case '2':
         Serial.println("PHASE=VEGETABLE_HIGH");
+        rdebugDln("PHASE=VEGETABLE_HIGH");
         PHASE = "VEGETABLE_HIGH";
         break;
       case '3':
         Serial.println("PHASE=FLOWERING_LOW");
+        rdebugDln("PHASE=FLOWERING_LOW");
         PHASE = "FLOWERING_LOW";
         break;
       case '4':
         Serial.println("PHASE=FLOWERING_HIGH");
+        rdebugDln("PHASE=FLOWERING_HIGH");
         PHASE = "FLOWERING_HIGH";
         break;
     }
   }
   if (String(topic).equals("distance")) {
     Serial.print("distance: ");
+    rdebugD("distance: ");
     float distance = getDistance();
     Serial.println(distance);
+    rdebugDln("%d", distance);
   }
   if (String(topic).equals("water_level")) {
     Serial.print("water_level: ");
+    rdebugD("water_level: ");
     float water_level = getWaterLevel();
     Serial.println(water_level);
+    rdebugDln("%d", water_level);
   }
   if (String(topic).equals("light_spectrum")) {
     Serial.print("light_spectrum: ");
+    rdebugD("light_spectrum: ");
     int light_spectrum = getLightSpectrum();
     Serial.println(light_spectrum);
+    rdebugDln("%d", light_spectrum);
   }
   if (String(topic).equals("temperature")) {
     Serial.print("temperature: ");
+    rdebugD("temperature: ");
     float temperature = getTemperature();
     Serial.println(temperature);
+    rdebugDln("%d", temperature);
   }
   if (String(topic).equals("moisture")) {
     Serial.print("moisture: ");
+    rdebugD("moisture: ");
     int moisture = getMoisture();
     Serial.println(moisture);
+    rdebugDln("%d", moisture);
   }
   if (String(topic).equals("energy")) {
     Serial.print("Energy: ");
@@ -406,6 +436,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println();
   Serial.println("-----------------------");
+  rdebugDln();
+  rdebugDln("-----------------------");
 }
 
 void setFanIn(int duty) {
@@ -436,12 +468,15 @@ void setFanIn(int duty) {
       break;
     case '5': 
       Serial.print("FAN INPUT -> ON at");
+      rdebugD("FAN INPUT -> ON at");
       mcp0.digitalWrite(FAN_IN, LOW);
       Serial.println(" 100 % PWM");
+      rdebugDln(" 100 % PWM");
       // analogWrite(FAN_IN_PWM, 1024);
       break;
     default:
       Serial.println("FAN INPUT -> OFF");
+      rdebugDln("FAN INPUT -> OFF");
       mcp0.digitalWrite(FAN_IN, HIGH); // Relay-off
       break;
    }
@@ -463,12 +498,16 @@ float getDistance() {
   Serial.print(timestamp + ": Distance: ");
   Serial.println(distance);
   Serial.print(timestamp + ": Recording distance...");
+  rdebugD("&s: Distance: ", timestamp.c_str());
+  rdebugDln("%d", distance);
+  rdebugD("%d: Recording distance...", timestamp.c_str());
   char result[8];
   char* message = dtostrf(distance, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
   clientMQTT.publish("distance_result", (byte*)message, length, retained);
   Serial.println("done");
+  rdebugDln("done");
   return distance;
 }
 
@@ -476,12 +515,15 @@ float getWaterLevel() {
   float water_level = adc.readADC(0);
   Serial.println((String)timestamp + ": MCP3008_ADC_0: " + water_level); // water level
   Serial.print(timestamp + ": Recording data of water level...");
+  rdebugDln("%d: MCP3008_ADC_0: %d", timestamp.c_str(), water_level); // water level
+  rdebugD("%d: Recording data of water level...", timestamp.c_str());
   char result[8];
   char* message = dtostrf(water_level, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
   clientMQTT.publish("water_level_result", (byte*)message, length, retained);
   Serial.println("done");
+  rdebugDln("done");
   return adc.readADC(0);
   return water_level;
 }
@@ -489,11 +531,15 @@ float getWaterLevel() {
 float getTemperature() {
  // TEMPERATURE
  Serial.print((String)timestamp + "Requesting temperatures...");
+ rdebugD("%d : Requesting temperatures...", timestamp.c_str());
  sensors.requestTemperatures(); // Send the command to get temperatures
  Serial.println("DONE");
+ rdebugDln("DONE");
  Serial.print((String)timestamp + "Temperature for the device 1 (index 0) is: ");
+ rdebugD("%d : Temperature for the device 1 (index 0) is: ", timestamp.c_str());
  float temperature = sensors.getTempCByIndex(0);
  Serial.println(temperature);
+ rdebugDln("%d", temperature);
  char result[8];
  char* message = dtostrf(temperature, 6, 2, result);
  int length = strlen(message);
@@ -506,12 +552,15 @@ float getLightSpectrum() {
   float light_spectrum = adc.readADC(2);
   Serial.println((String)timestamp + ": MCP3008_ADC_2: " + light_spectrum); // light spectrum
   Serial.println(timestamp + ": Recording data of light spectrum.");
+  rdebugDln("%d: MCP3008_ADC_2: %d", timestamp.c_str(), light_spectrum); // light spectrum
+  rdebugDln("%d: Recording data of light spectrum.", timestamp.c_str());
   char result[8];
   char* message = dtostrf(light_spectrum, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
   clientMQTT.publish("light_spectrum_result", (byte*)message, length, retained);
   Serial.println("done");
+  rdebugDln("done");
   return light_spectrum;
 }
 
@@ -519,12 +568,15 @@ int getMoisture() {
   int moisture = adc.readADC(1);
   Serial.println((String)timestamp + ": MCP3008_ADC_1: " + moisture); // moisture sensor
   Serial.println(timestamp + ": Recording data of moisture.");
+  rdebugDln("%d: MCP3008_ADC_1: %d", timestamp.c_str(), moisture); // moisture sensor
+  rdebugDln("%d: Recording data of moisture.", timestamp.c_str());
   char result[8];
   char* message = dtostrf(moisture, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
   clientMQTT.publish("moisture_result", (byte*)message, length, retained);
   Serial.println("done");
+  rdebugDln("done");
   return moisture;
 }
 
@@ -561,10 +613,17 @@ String getEnergy() {
 
 void loop() {
   // MQTT client
+  if (!clientMQTT.connected()) {
+    rdebugDln("Reconnect to MQTT");
+    reconnect();
+  }
   clientMQTT.loop();
   
   // REMOTE UPDATE OTA
   httpServer.handleClient();
+
+  // TELNET REMOTE DEBUG
+  if (RemoteSerial) Debug.handle();
  
     // TIME TIMESTAMP
   HTTPClient clientHTTP;
@@ -573,7 +632,51 @@ void loop() {
   if (httpCode > 0) {
     timestamp = clientHTTP.getString();
   } else {
-    Serial.printf("[HTTP] GET... failed, error: %s\n", clientHTTP.errorToString(httpCode).c_str());
+    Serial.printf("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
+    rdebugEln("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
   }
   clientHTTP.end();
+}
+
+void reconnect() {
+  // Loop until we're reconnected
+  while (!clientMQTT.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    rdebugI("Attempting MQTT connection...");
+    // Attempt to connect
+    if (clientMQTT.connect("ESP8266Client", mqttUser, mqttPassword)) {
+      Serial.println("connected");
+      rdebugI("connected");
+      clientMQTT.subscribe("water");
+      clientMQTT.subscribe("light");
+      clientMQTT.subscribe("phase");
+      clientMQTT.subscribe("distance");
+      clientMQTT.subscribe("water_level");
+      clientMQTT.subscribe("light_spectrum");
+      clientMQTT.subscribe("moisture");
+      clientMQTT.subscribe("fanIn");
+      clientMQTT.subscribe("fanOut");
+      clientMQTT.subscribe("coolLamp");
+      clientMQTT.subscribe("co2");
+      clientMQTT.subscribe("heater");
+      clientMQTT.subscribe("peltier");
+      clientMQTT.subscribe("water_pump");
+      clientMQTT.subscribe("dehumidifier");
+      clientMQTT.subscribe("energy");
+      clientMQTT.subscribe("test");
+      clientMQTT.subscribe("testSingle");
+      clientMQTT.subscribe("testSingleOff");
+      clientMQTT.subscribe("temperature");
+      clientMQTT.subscribe("built-in_led");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(clientMQTT.state());
+      Serial.println(" try again in 5 seconds");
+      rdebugE("failed, rc=");
+      rdebugE("" + clientMQTT.state());
+      rdebugEln(" try again in 5 seconds");
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
 }
