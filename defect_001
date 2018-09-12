@@ -1,0 +1,687 @@
+ge:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:07:03: MCP3008_ADC_0: 0.00
+2018-09-12 22:07:03: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:07:04: MCP3008_ADC_1: 551
+2018-09-12 22:07:04: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 551
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+551
+(D) (callback) 551
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073692684 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:08:02: MCP3008_ADC_1: 554
+2018-09-12 22:08:02: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 554
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+554
+(D) (callback) 554
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:08:04: MCP3008_ADC_0: 0.00
+2018-09-12 22:08:04: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:09:01: MCP3008_ADC_1: 556
+2018-09-12 22:09:01: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 556
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+556
+(D) (callback) 556
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:09:05: MCP3008_ADC_0: 0.00
+2018-09-12 22:09:05: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: light_spectrum
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+light_spectrum: 2018-09-12 22:10:03: MCP3008_ADC_2: 380.00
+2018-09-12 22:10:03: Recording data of light spectrum.
+(D) (callback) light_spectrum: (getLightSpectrum) 1073690116: MCP3008_ADC_2: 0
+(D) (getLightSpectrum) 1073690116: Recording data of light spectrum.
+done
+(D) (getLightSpectrum) done
+380
+(D) (callback) 380
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073690300 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:10:07: MCP3008_ADC_0: 0.00
+2018-09-12 22:10:07: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:10:08: MCP3008_ADC_1: 555
+2018-09-12 22:10:08: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 555
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+555
+(D) (callback) 555
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:11:01: MCP3008_ADC_0: 0.00
+2018-09-12 22:11:01: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:11:03: MCP3008_ADC_1: 555
+2018-09-12 22:11:03: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 555
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+555
+(D) (callback) 555
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:12:04: MCP3008_ADC_0: 0.00
+2018-09-12 22:12:04: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:12:06: MCP3008_ADC_1: 558
+2018-09-12 22:12:06: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 558
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+558
+(D) (callback) 558
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:13:01: MCP3008_ADC_1: 560
+2018-09-12 22:13:01: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 560
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+560
+(D) (callback) 560
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:13:02: MCP3008_ADC_0: 0.00
+2018-09-12 22:13:02: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:14:00: MCP3008_ADC_1: 562
+2018-09-12 22:14:00: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 562
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+562
+(D) (callback) 562
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:14:02: MCP3008_ADC_0: 0.00
+2018-09-12 22:14:02: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: light_spectrum
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+light_spectrum: 2018-09-12 22:15:01: MCP3008_ADC_2: 359.00
+2018-09-12 22:15:01: Recording data of light spectrum.
+(D) (callback) light_spectrum: (getLightSpectrum) 1073690116: MCP3008_ADC_2: 0
+(D) (getLightSpectrum) 1073690116: Recording data of light spectrum.
+done
+(D) (getLightSpectrum) done
+359
+(D) (callback) 359
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:15:03: MCP3008_ADC_1: 561
+2018-09-12 22:15:03: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 561
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+561
+(D) (callback) 561
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073687740 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:15:06: MCP3008_ADC_0: 0.00
+2018-09-12 22:15:06: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073692684 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:16:04: MCP3008_ADC_1: 563
+2018-09-12 22:16:04: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 563
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+563
+(D) (callback) 563
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:16:05: MCP3008_ADC_0: 0.00
+2018-09-12 22:16:05: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073687692 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: moisture
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+0
+moisture: 2018-09-12 22:17:01: MCP3008_ADC_1: 573
+2018-09-12 22:17:01: Recording data of moisture.
+(D) (callback) moisture: (getMoisture) 1073690116: MCP3008_ADC_1: 573
+(D) (getMoisture) 1073690116: Recording data of moisture.
+done
+(D) (getMoisture) done
+573
+(D) (callback) 573
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073688028 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:17:06: MCP3008_ADC_0: 0.00
+2018-09-12 22:17:06: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+9
+TEST PIN: 9 ->ON
+(D) (callback) TEST PIN: 1073688028 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: fanIn
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+5
+FAN INPUT -> ON at 100 % PWM
+(D) (setFanIn) FAN INPUT -> ON at(setFanIn)  100 PWM
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: testSingle
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+8
+TEST PIN: 8 ->ON
+(D) (callback) TEST PIN: 1073688028 ->ON
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+Message arrived in topic: water_level
+Message:(D) (callback) Message arrived in topic: (callback) Message:
+
+water_level: 2018-09-12 22:18:25: MCP3008_ADC_0: 0.00
+2018-09-12 22:18:25: Recording data of water level...(D) (callback) water_level: (getWaterLevel) 1073690116: MCP3008_ADC_0: 0
+done
+(D) (getWaterLevel) 1073690116: Recording data of water level...(getWaterLevel) done
+0.00
+(D) (callback) 1
+
+-----------------------
+(D) (callback) 
+(D) (callback) -----------------------
+
+ ets Jan  8 2013,rst cause:4, boot mode:(3,6)
+
+wdt reset
