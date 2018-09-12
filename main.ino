@@ -6,6 +6,7 @@
 /* 20/08/2018: clean up * version: 3.2 */
 /* 28/08/2018: blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
 /* 01/09/2018: MQTT reconnect in case of lost connection, remote debug by telnet * version: 3.4 */
+/* 12/09/2018: bug-fix reset: rst cause:4, boot mode:(3,6) * version: 3.5 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -200,8 +201,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i];
   }
   Serial.println("");
-  delay(1000);
-
+  // bug-fix reset defect_001
+  // delay(1000);
   if (String(topic).equals("dehumidifier")) {
     if(message.equals("1")) {
       Serial.println("DEHUMIDIFIER->ON");
@@ -678,5 +679,5 @@ void reconnect() {
       // Wait 5 seconds before retrying
       delay(5000);
     }
-  }
+ }
 }
