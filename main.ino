@@ -7,6 +7,7 @@
 /* 28/08/2018: blink blue led when esp8266 is working, upload from remote OTA * version: 3.3 */
 /* 01/09/2018: MQTT reconnect in case of lost connection, remote debug by telnet * version: 3.4 */
 /* 12/09/2018: bug-fix reset: rst cause:4, boot mode:(3,6) * version: 3.5 */
+/* 15/09/2018: added 2 moisture sensors * version: 3.6 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -201,8 +202,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i];
   }
   Serial.println("");
-  // bug-fix reset defect_001
-  // delay(1000);
+  delay(1000);
+
   if (String(topic).equals("dehumidifier")) {
     if(message.equals("1")) {
       Serial.println("DEHUMIDIFIER->ON");
@@ -424,9 +425,22 @@ void callback(char* topic, byte* payload, unsigned int length) {
     rdebugDln("%d", temperature);
   }
   if (String(topic).equals("moisture")) {
-    Serial.print("moisture: ");
+    Serial.print("moisture: " + String(topic) + ": ");
     rdebugD("moisture: ");
-    int moisture = getMoisture();
+    int moisture = 0;
+    
+    if(message.equals("0")) {
+      moisture = getMoisture(0);  
+    }
+    if(message.equals("1")) {
+      moisture = getMoisture(1);  
+    }
+    if(message.equals("2")) {
+      moisture = getMoisture(2);  
+    }
+
+   // moisture = getMoisture((char)payload[0]);
+    
     Serial.println(moisture);
     rdebugDln("%d", moisture);
   }
@@ -565,17 +579,52 @@ float getLightSpectrum() {
   return light_spectrum;
 }
 
-int getMoisture() {
-  int moisture = adc.readADC(1);
-  Serial.println((String)timestamp + ": MCP3008_ADC_1: " + moisture); // moisture sensor
-  Serial.println(timestamp + ": Recording data of moisture.");
-  rdebugDln("%d: MCP3008_ADC_1: %d", timestamp.c_str(), moisture); // moisture sensor
-  rdebugDln("%d: Recording data of moisture.", timestamp.c_str());
+int getMoisture(int sensor) {
+  int moisture = 0;
+  switch (sensor){
+    case 0:
+      rdebugDln("Selected sensor: 0");
+      moisture = adc.readADC(1);
+      break;
+    case 1:
+      rdebugDln("Selected sensor: 1");
+      moisture = adc.readADC(3);
+      break;
+    case 2:
+      rdebugDln("Selected sensor: 2");
+      moisture = adc.readADC(4);
+      break;
+    default:
+      Serial.println("Invalid sensor number: " + sensor);
+      rdebugDln("Invalid sensor number: %d", sensor);
+      Serial.println("Default sensor 0");
+      rdebugDln("Default sensor 0");
+      moisture = adc.readADC(1);
+      break;
+  }
+  
+  Serial.println((String)timestamp + ": Sensor n.: " + sensor + " : " + moisture); // moisture sensor
+  Serial.println(timestamp + ": Recording data of moisture from sensor n.: " + sensor + ".");
+  rdebugDln("%d: Sensor n. %d: %d", timestamp.c_str(), sensor, moisture); // moisture sensor
+  rdebugDln("%d: Recording data of moisture from sensor n. %d.", timestamp.c_str(), sensor);
   char result[8];
   char* message = dtostrf(moisture, 6, 2, result);
   int length = strlen(message);
   boolean retained = true;
-  clientMQTT.publish("moisture_result", (byte*)message, length, retained);
+  switch (sensor){
+    case 0:
+      clientMQTT.publish("moisture_result_0", (byte*)message, length, retained);
+      break;
+    case 1:
+      clientMQTT.publish("moisture_result_1", (byte*)message, length, retained);
+      break;
+    case 2:
+      clientMQTT.publish("moisture_result_2", (byte*)message, length, retained);
+      break;
+    default:
+      clientMQTT.publish("moisture_result_0", (byte*)message, length, retained);
+      break;
+  }
   Serial.println("done");
   rdebugDln("done");
   return moisture;
@@ -672,12 +721,13 @@ void reconnect() {
     } else {
       Serial.print("failed, rc=");
       Serial.print(clientMQTT.state());
-      Serial.println(" try again in 5 seconds");
+      Serial.println(" try again in 1 seconds");
       rdebugE("failed, rc=");
       rdebugE("" + clientMQTT.state());
-      rdebugEln(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
+      rdebugEln(" try again in 1 seconds");
+      // Wait 5->1 seconds before retrying //BUG_001
+      // delay(5000);
+      delay(1000);
     }
- }
+  }
 }
