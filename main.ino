@@ -8,6 +8,7 @@
 /* 01/09/2018: MQTT reconnect in case of lost connection, remote debug by telnet * version: 3.4 */
 /* 12/09/2018: bug-fix reset: rst cause:4, boot mode:(3,6) * version: 3.5 */
 /* 15/09/2018: added 2 moisture sensors * version: 3.6 */
+/* 14/10/2018: new feature -> fanIn PWM, new delay(sec.) configuration, log -> timestamp fixed * version: 3.7 */
 
 #include <OneWire.h>
 #include <Adafruit_MCP3008.h>
@@ -82,7 +83,6 @@ const int LED_ROYAL_BLUE = 12;
 const int LED_WARM_WHITE = 13;
 const int HEATER_FAN = 14;
 const int HEATER = 15;
-const int FAN_IN_PWM = 16; // only for new feature PWM
 
 // BLUE LED
 int LED = 2;
@@ -100,6 +100,9 @@ bool RemoteSerial = true; //true = Remote and local serial, false = local serial
 RemoteDebug Debug;
 #define MAX_SRV_CLIENTS 1
 WiFiClient serverClients[MAX_SRV_CLIENTS];
+
+// FAN PWM
+const int FAN_IN_PWM = 2;
 
 void setup() {
   Serial.begin(115200);
@@ -187,7 +190,7 @@ void setup() {
   Serial.println("OK");
   rdebugIln("OK");
 
-  delay(1500);
+  delay(500);
 }
  
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -202,7 +205,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i];
   }
   Serial.println("");
-  delay(1000);
+  delay(500);
 
   if (String(topic).equals("dehumidifier")) {
     if(message.equals("1")) {
@@ -277,7 +280,92 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
  
   if (String(topic).equals("fanIn")) {
-    setFanIn((char)payload[0]);
+    switch ((char)payload[0]) {
+      // fans datasheet: fans are tested only up to 20% duty
+      // 10% duty -> disabled by code
+      case '0': // FAN OFF
+        Serial.println("FAN INPUT -> OFF");
+        rdebugDln("FAN INPUT -> OFF");
+        mcp0.digitalWrite(FAN_IN, HIGH); // Relay-off
+        break;
+      case '1': // 100% duty
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 1023);
+        Serial.println(" 100 % PWM");
+        rdebugDln(" 100 % PWM");
+        break;
+      case '2':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 200);
+        Serial.println(" 20 % PWM");
+        rdebugDln(" 20 % PWM");
+        break;
+      case '3':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 300);
+        Serial.println(" 30 % PWM");
+        rdebugDln(" 30 % PWM");
+        break;
+      case '4':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 400);
+        Serial.println(" 40 % PWM");
+        rdebugDln(" 40 % PWM");
+        break;
+      case '5':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 500);
+        Serial.println(" 50 % PWM");
+        rdebugDln(" 50 % PWM");
+        break;
+      case '6':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 600);
+        Serial.println(" 60 % PWM");
+        rdebugDln(" 60 % PWM");
+        break;
+      case '7':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 700);
+        Serial.println(" 70 % PWM");
+        rdebugDln(" 70 % PWM");
+        break;
+      case '8':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 800);
+        Serial.println(" 80 % PWM");
+        rdebugDln(" 80 % PWM");
+        break;
+      case '9':
+        Serial.print("FAN INPUT -> ON at");
+        rdebugD("FAN INPUT -> ON at");
+        mcp0.digitalWrite(FAN_IN, LOW);
+        analogWrite(FAN_IN_PWM, 900);
+        Serial.println(" 90 % PWM");
+        rdebugDln(" 90 % PWM");
+        break;
+      default:
+        Serial.println("FAN INPUT -> OFF");
+        rdebugDln("FAN INPUT -> OFF");
+        mcp0.digitalWrite(FAN_IN, HIGH); // Relay-off
+        break;
+    }
   }
   
   if (String(topic).equals("water_pump")) {
@@ -310,13 +398,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if (String(topic).equals("testSingle")) {
     Serial.println("TEST PIN: " + message + " ->ON");
-    rdebugDln("TEST PIN: %d ->ON", message.c_str());
+    rdebugDln("TEST PIN: %s ->ON", message.c_str());
     mcp0.digitalWrite(message.toInt(), LOW);
   }
   
   if (String(topic).equals("testSingleOff")) {
     Serial.println("TEST PIN: " + message + " ->OFF");
-    rdebugDln("TEST PIN: %d ->OFF", message.c_str());
+    rdebugDln("TEST PIN: %s ->OFF", message.c_str());
     mcp0.digitalWrite(message.toInt(), HIGH);
   }
 
@@ -401,28 +489,28 @@ void callback(char* topic, byte* payload, unsigned int length) {
     rdebugD("distance: ");
     float distance = getDistance();
     Serial.println(distance);
-    rdebugDln("%d", distance);
+    rdebugDln("result: distance: %d", distance);
   }
   if (String(topic).equals("water_level")) {
     Serial.print("water_level: ");
     rdebugD("water_level: ");
     float water_level = getWaterLevel();
     Serial.println(water_level);
-    rdebugDln("%d", water_level);
+    rdebugDln("result: water_level: %d", water_level);
   }
   if (String(topic).equals("light_spectrum")) {
     Serial.print("light_spectrum: ");
     rdebugD("light_spectrum: ");
     int light_spectrum = getLightSpectrum();
     Serial.println(light_spectrum);
-    rdebugDln("%d", light_spectrum);
+    rdebugDln("result: light_spectrum: %d", light_spectrum);
   }
   if (String(topic).equals("temperature")) {
     Serial.print("temperature: ");
     rdebugD("temperature: ");
     float temperature = getTemperature();
     Serial.println(temperature);
-    rdebugDln("%d", temperature);
+    rdebugDln("result: temperature: %d", temperature);
   }
   if (String(topic).equals("moisture")) {
     Serial.print("moisture: " + String(topic) + ": ");
@@ -438,11 +526,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if(message.equals("2")) {
       moisture = getMoisture(2);  
     }
-
-   // moisture = getMoisture((char)payload[0]);
-    
+  
     Serial.println(moisture);
-    rdebugDln("%d", moisture);
+    rdebugDln("result: moisture: %d", moisture);
   }
   if (String(topic).equals("energy")) {
     Serial.print("Energy: ");
@@ -453,48 +539,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println("-----------------------");
   rdebugDln();
   rdebugDln("-----------------------");
-}
-
-void setFanIn(int duty) {
-   switch (duty) {
-    case '1':
-      Serial.print("FAN INPUT -> ON at");
-      mcp0.digitalWrite(FAN_IN, LOW);
-      Serial.println(" 10 % PWM");   
-      analogWrite(FAN_IN_PWM, 102);
-      break;
-    case '2':
-      Serial.print("FAN INPUT -> ON at");
-      mcp0.digitalWrite(FAN_IN, LOW);
-      Serial.println(" 20 % PWM");
-      analogWrite(FAN_IN_PWM, 205);
-      break;
-    case '3':
-      Serial.print("FAN INPUT -> ON at");
-      mcp0.digitalWrite(FAN_IN, LOW);
-      Serial.println(" 40 % PWM");
-      analogWrite(FAN_IN_PWM, 410);
-      break;
-    case '4':
-      Serial.print("FAN INPUT -> ON at");
-      mcp0.digitalWrite(FAN_IN, LOW);
-      Serial.println(" 70 % PWM");
-      analogWrite(FAN_IN_PWM, 714);
-      break;
-    case '5': 
-      Serial.print("FAN INPUT -> ON at");
-      rdebugD("FAN INPUT -> ON at");
-      mcp0.digitalWrite(FAN_IN, LOW);
-      Serial.println(" 100 % PWM");
-      rdebugDln(" 100 % PWM");
-      // analogWrite(FAN_IN_PWM, 1024);
-      break;
-    default:
-      Serial.println("FAN INPUT -> OFF");
-      rdebugDln("FAN INPUT -> OFF");
-      mcp0.digitalWrite(FAN_IN, HIGH); // Relay-off
-      break;
-   }
 }
 
 float getDistance() {
@@ -515,7 +559,7 @@ float getDistance() {
   Serial.print(timestamp + ": Recording distance...");
   rdebugD("&s: Distance: ", timestamp.c_str());
   rdebugDln("%d", distance);
-  rdebugD("%d: Recording distance...", timestamp.c_str());
+  rdebugD("%s: Recording distance...", timestamp.c_str());
   char result[8];
   char* message = dtostrf(distance, 6, 2, result);
   int length = strlen(message);
@@ -530,8 +574,8 @@ float getWaterLevel() {
   float water_level = adc.readADC(0);
   Serial.println((String)timestamp + ": MCP3008_ADC_0: " + water_level); // water level
   Serial.print(timestamp + ": Recording data of water level...");
-  rdebugDln("%d: MCP3008_ADC_0: %d", timestamp.c_str(), water_level); // water level
-  rdebugD("%d: Recording data of water level...", timestamp.c_str());
+  rdebugDln("%s: MCP3008_ADC_0: %d", timestamp.c_str(), water_level); // water level
+  rdebugD("%s: Recording data of water level...", timestamp.c_str());
   char result[8];
   char* message = dtostrf(water_level, 6, 2, result);
   int length = strlen(message);
@@ -546,12 +590,12 @@ float getWaterLevel() {
 float getTemperature() {
  // TEMPERATURE
  Serial.print((String)timestamp + "Requesting temperatures...");
- rdebugD("%d : Requesting temperatures...", timestamp.c_str());
+ rdebugD("%s : Requesting temperatures...", timestamp.c_str());
  sensors.requestTemperatures(); // Send the command to get temperatures
  Serial.println("DONE");
  rdebugDln("DONE");
  Serial.print((String)timestamp + "Temperature for the device 1 (index 0) is: ");
- rdebugD("%d : Temperature for the device 1 (index 0) is: ", timestamp.c_str());
+ rdebugD("%s : Temperature for the device 1 (index 0) is: ", timestamp.c_str());
  float temperature = sensors.getTempCByIndex(0);
  Serial.println(temperature);
  rdebugDln("%d", temperature);
@@ -567,8 +611,8 @@ float getLightSpectrum() {
   float light_spectrum = adc.readADC(2);
   Serial.println((String)timestamp + ": MCP3008_ADC_2: " + light_spectrum); // light spectrum
   Serial.println(timestamp + ": Recording data of light spectrum.");
-  rdebugDln("%d: MCP3008_ADC_2: %d", timestamp.c_str(), light_spectrum); // light spectrum
-  rdebugDln("%d: Recording data of light spectrum.", timestamp.c_str());
+  rdebugDln("%s: MCP3008_ADC_2: %d", timestamp.c_str(), light_spectrum); // light spectrum
+  rdebugDln("%s: Recording data of light spectrum.", timestamp.c_str());
   char result[8];
   char* message = dtostrf(light_spectrum, 6, 2, result);
   int length = strlen(message);
@@ -603,10 +647,10 @@ int getMoisture(int sensor) {
       break;
   }
   
-  Serial.println((String)timestamp + ": Sensor n.: " + sensor + " : " + moisture); // moisture sensor
-  Serial.println(timestamp + ": Recording data of moisture from sensor n.: " + sensor + ".");
-  rdebugDln("%d: Sensor n. %d: %d", timestamp.c_str(), sensor, moisture); // moisture sensor
-  rdebugDln("%d: Recording data of moisture from sensor n. %d.", timestamp.c_str(), sensor);
+  Serial.println((String) timestamp.c_str() + ": Sensor n.: " + sensor + " : " + moisture); // moisture sensor
+  Serial.println((String) timestamp.c_str() + ": Recording data of moisture from sensor n.: " + sensor + ".");
+  rdebugDln("%s: Sensor n. %d: %d", timestamp.c_str(), sensor, moisture); // moisture sensor
+  rdebugDln("%s: Recording data of moisture from sensor n. %d.", timestamp.c_str(), sensor);
   char result[8];
   char* message = dtostrf(moisture, 6, 2, result);
   int length = strlen(message);
