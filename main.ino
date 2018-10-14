@@ -9,11 +9,10 @@
 /* 12/09/2018: bug-fix reset: rst cause:4, boot mode:(3,6) * version: 3.5 */
 /* 15/09/2018: added 2 moisture sensors * version: 3.6 */
 /* 14/10/2018: new feature -> fanIn PWM, new delay(sec.) configuration, log -> timestamp fixed * version: 3.7 */
+/* 14/10/2018: heater fan, removed DS18B20 driver, clean-up code * version: 3.8 */
 
-#include <OneWire.h>
 #include <Adafruit_MCP3008.h>
 #include <Adafruit_MCP23017.h>
-#include <DallasTemperature.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WebServer.h>
@@ -59,12 +58,6 @@ const int echoPin = 0; //D3
 long duration;
 int distance;
 
-// TEMPERATURE
-#define ONE_WIRE_BUS 15 //Pin to which is attached a temperature sensor 
-#define ONE_WIRE_MAX_DEV 1 //The maximum number of devices 
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
-
 // MCP23017 PIN
 Adafruit_MCP23017 mcp0;
 const int FAN_IN = 0;
@@ -86,9 +79,6 @@ const int HEATER = 15;
 
 // BLUE LED
 int LED = 2;
-
-// TIMESTAMP
-String timestamp;
 
 // REMOTE UPDATE OTA
 const char* host = "esp8266-webupdate";
@@ -137,9 +127,6 @@ void setup() {
   // PZEM004T
   pzem.setAddress(ip);
   
-  // TEMPERATURE
-  sensors.begin();
-
   // MCP23017
   mcp0.begin(0);
   mcp0.pinMode(0, OUTPUT);
@@ -240,6 +227,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
       Serial.println("HEATER->OFF");
       rdebugDln("HEATER->OFF");
       mcp0.digitalWrite(HEATER, HIGH);      
+    }
+  }
+
+  if (String(topic).equals("heater_fan")) {
+    if(message.equals("1")) {
+      Serial.println("HEATER FAN->ON");
+      rdebugDln("HEATER FAN->ON");
+      mcp0.digitalWrite(HEATER_FAN, LOW);
+    } else {
+      Serial.println("HEATER FAN->OFF");
+      rdebugDln("HEATER FAN->OFF");
+      mcp0.digitalWrite(HEATER_FAN, HIGH);      
     }
   }
 
@@ -505,13 +504,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println(light_spectrum);
     rdebugDln("result: light_spectrum: %d", light_spectrum);
   }
-  if (String(topic).equals("temperature")) {
-    Serial.print("temperature: ");
-    rdebugD("temperature: ");
-    float temperature = getTemperature();
-    Serial.println(temperature);
-    rdebugDln("result: temperature: %d", temperature);
-  }
   if (String(topic).equals("moisture")) {
     Serial.print("moisture: " + String(topic) + ": ");
     rdebugD("moisture: ");
@@ -554,12 +546,12 @@ float getDistance() {
   // Calculating the distance
   distance = duration * 0.034 / 2;
   // Prints the distance on the Serial Monitor
-  Serial.print(timestamp + ": Distance: ");
+  Serial.print(getTimestamp() + ": Distance: ");
   Serial.println(distance);
-  Serial.print(timestamp + ": Recording distance...");
-  rdebugD("&s: Distance: ", timestamp.c_str());
+  Serial.print(getTimestamp() + ": Recording distance...");
+  rdebugD("&s: Distance: ", getTimestamp().c_str());
   rdebugDln("%d", distance);
-  rdebugD("%s: Recording distance...", timestamp.c_str());
+  rdebugD("%s: Recording distance...", getTimestamp().c_str());
   char result[8];
   char* message = dtostrf(distance, 6, 2, result);
   int length = strlen(message);
@@ -572,10 +564,10 @@ float getDistance() {
 
 float getWaterLevel() {
   float water_level = adc.readADC(0);
-  Serial.println((String)timestamp + ": MCP3008_ADC_0: " + water_level); // water level
-  Serial.print(timestamp + ": Recording data of water level...");
-  rdebugDln("%s: MCP3008_ADC_0: %d", timestamp.c_str(), water_level); // water level
-  rdebugD("%s: Recording data of water level...", timestamp.c_str());
+  Serial.println(getTimestamp() + ": MCP3008_ADC_0: " + water_level); // water level
+  Serial.print(getTimestamp() + ": Recording data of water level...");
+  rdebugDln("%s: MCP3008_ADC_0: %d", getTimestamp().c_str(), water_level); // water level
+  rdebugD("%s: Recording data of water level...", getTimestamp().c_str());
   char result[8];
   char* message = dtostrf(water_level, 6, 2, result);
   int length = strlen(message);
@@ -587,32 +579,12 @@ float getWaterLevel() {
   return water_level;
 }
 
-float getTemperature() {
- // TEMPERATURE
- Serial.print((String)timestamp + "Requesting temperatures...");
- rdebugD("%s : Requesting temperatures...", timestamp.c_str());
- sensors.requestTemperatures(); // Send the command to get temperatures
- Serial.println("DONE");
- rdebugDln("DONE");
- Serial.print((String)timestamp + "Temperature for the device 1 (index 0) is: ");
- rdebugD("%s : Temperature for the device 1 (index 0) is: ", timestamp.c_str());
- float temperature = sensors.getTempCByIndex(0);
- Serial.println(temperature);
- rdebugDln("%d", temperature);
- char result[8];
- char* message = dtostrf(temperature, 6, 2, result);
- int length = strlen(message);
- boolean retained = true;
- clientMQTT.publish("temperature_result", (byte*)message, length, retained);
- return temperature;
-}
-
 float getLightSpectrum() {
   float light_spectrum = adc.readADC(2);
-  Serial.println((String)timestamp + ": MCP3008_ADC_2: " + light_spectrum); // light spectrum
-  Serial.println(timestamp + ": Recording data of light spectrum.");
-  rdebugDln("%s: MCP3008_ADC_2: %d", timestamp.c_str(), light_spectrum); // light spectrum
-  rdebugDln("%s: Recording data of light spectrum.", timestamp.c_str());
+  Serial.println(getTimestamp() + ": MCP3008_ADC_2: " + light_spectrum); // light spectrum
+  Serial.println(getTimestamp() + ": Recording data of light spectrum.");
+  rdebugDln("%s: MCP3008_ADC_2: %d", getTimestamp().c_str(), light_spectrum); // light spectrum
+  rdebugDln("%s: Recording data of light spectrum.", getTimestamp().c_str());
   char result[8];
   char* message = dtostrf(light_spectrum, 6, 2, result);
   int length = strlen(message);
@@ -647,10 +619,10 @@ int getMoisture(int sensor) {
       break;
   }
   
-  Serial.println((String) timestamp.c_str() + ": Sensor n.: " + sensor + " : " + moisture); // moisture sensor
-  Serial.println((String) timestamp.c_str() + ": Recording data of moisture from sensor n.: " + sensor + ".");
-  rdebugDln("%s: Sensor n. %d: %d", timestamp.c_str(), sensor, moisture); // moisture sensor
-  rdebugDln("%s: Recording data of moisture from sensor n. %d.", timestamp.c_str(), sensor);
+  Serial.println(getTimestamp() + ": Sensor n.: " + sensor + " : " + moisture); 
+  Serial.println(getTimestamp() + ": Recording data of moisture from sensor n.: " + sensor + ".");
+  rdebugDln("%s: Sensor n. %d: %d", getTimestamp().c_str(), sensor, moisture); 
+  rdebugDln("%s: Recording data of moisture from sensor n. %d.", getTimestamp().c_str(), sensor);
   char result[8];
   char* message = dtostrf(moisture, 6, 2, result);
   int length = strlen(message);
@@ -718,18 +690,7 @@ void loop() {
 
   // TELNET REMOTE DEBUG
   if (RemoteSerial) Debug.handle();
- 
-    // TIME TIMESTAMP
-  HTTPClient clientHTTP;
-  clientHTTP.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");
-  int httpCode = clientHTTP.GET();
-  if (httpCode > 0) {
-    timestamp = clientHTTP.getString();
-  } else {
-    Serial.printf("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
-    rdebugEln("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
-  }
-  clientHTTP.end();
+
 }
 
 void reconnect() {
@@ -753,6 +714,7 @@ void reconnect() {
       clientMQTT.subscribe("coolLamp");
       clientMQTT.subscribe("co2");
       clientMQTT.subscribe("heater");
+      clientMQTT.subscribe("heater_fan");
       clientMQTT.subscribe("peltier");
       clientMQTT.subscribe("water_pump");
       clientMQTT.subscribe("dehumidifier");
@@ -760,7 +722,6 @@ void reconnect() {
       clientMQTT.subscribe("test");
       clientMQTT.subscribe("testSingle");
       clientMQTT.subscribe("testSingleOff");
-      clientMQTT.subscribe("temperature");
       clientMQTT.subscribe("built-in_led");
     } else {
       Serial.print("failed, rc=");
@@ -774,4 +735,21 @@ void reconnect() {
       delay(1000);
     }
   }
+}  
+
+String getTimestamp() {
+  // TIME TIMESTAMP
+  String timestamp = " ";
+  HTTPClient clientHTTP;
+  clientHTTP.begin("http://weinzuhause.altervista.org/ws/getDateTime.php");
+  int httpCode = clientHTTP.GET();
+  if (httpCode > 0) {
+    timestamp = clientHTTP.getString();
+  } else {
+    Serial.printf("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
+    rdebugEln("[HTTP] GET... failed, error: %d\n", clientHTTP.errorToString(httpCode).c_str());
+    timestamp = "ERROR";
+  }
+  clientHTTP.end();
+  return timestamp;
 }
