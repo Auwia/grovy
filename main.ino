@@ -10,6 +10,7 @@
 /* 15/09/2018: added 2 moisture sensors * version: 3.6 */
 /* 14/10/2018: new feature -> fanIn PWM, new delay(sec.) configuration, log -> timestamp fixed * version: 3.7 */
 /* 14/10/2018: heater fan, removed DS18B20 driver, clean-up code * version: 3.8 */
+/* 03/11/2018: range sensor fix, fanIn PWM change GPIO * version: 3.9 */
 
 #include <Adafruit_MCP3008.h>
 #include <Adafruit_MCP23017.h>
@@ -53,7 +54,7 @@ Adafruit_MCP3008 adc;
 #define CS_PIN D8
 
 // RANGE SENSOR
-const int trigPin = 0; //D4
+const int trigPin = 2; //D4
 const int echoPin = 0; //D3
 long duration;
 int distance;
@@ -92,7 +93,7 @@ RemoteDebug Debug;
 WiFiClient serverClients[MAX_SRV_CLIENTS];
 
 // FAN PWM
-const int FAN_IN_PWM = 2;
+const int FAN_IN_PWM = 16;
 
 void setup() {
   Serial.begin(115200);
