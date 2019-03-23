@@ -1,5 +1,5 @@
 /* * Author: Massimo Manganiello * */
-/* Lamp 1.0 - first release */
+/* 23/03/2019: Lamp first development. * version: 1.0 */
 
 #include <Adafruit_MCP3008.h>
 #include <Adafruit_MCP23017.h>
