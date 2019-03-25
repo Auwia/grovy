@@ -1,5 +1,5 @@
 /* * Author: Massimo Manganiello * */
-/* 23/03/2019: Lamp first development. * version: 1.0 */
+/* 23-25/03/2019: Lamp first development. * version: 1.0 */
 
 #include <Adafruit_MCP3008.h>
 #include <Adafruit_MCP23017.h>
@@ -14,6 +14,8 @@
 #include <RemoteDebug.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <MySQL_Connection.h>
+#include <MySQL_Cursor.h>
 
 // TIMESTAMP
 String timestamp;
@@ -43,13 +45,13 @@ const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
 // LEDs
-int COOL_LAMP        =  16;
-int OUT_FILTER       =  14;
-int FULL_SPECTRUM    =   5;
-int BRIGHT_BLU       =   0;
-int BRIGHT_RED_1     =   2;
-int ROYAL_BLU        =   4;
-int DEEP_RED         =  13;
+int COOL_LAMP        =  4;
+int OUT_FILTER       =  2;
+int FULL_SPECTRUM    = 13;
+int BRIGHT_BLU       = 14;
+int BRIGHT_RED_1     =  5;
+int ROYAL_BLU        = 16;
+int DEEP_RED         =  0;
 
 // REMOTE UPDATE OTA
 const char* host = "esp8266-webupdate";
@@ -65,12 +67,19 @@ WiFiClient serverClients[MAX_SRV_CLIENTS];
 // FAN PWM
 const int FAN_IN_PWM = 16;
 
+// MYSQL
+IPAddress server_addr(185, 51, 11, 3);
+char user[] = "u112031db1";
+char password[] = "4i340So";
+MySQL_Connection conn((Client *)&clientWIFI);
+MySQL_Cursor *cur_mem;
+
 void setup() {
   Serial.begin(115200);
- 
+
   // TEMPERATURE
   DS18B20.begin();
-    
+
   // WIFI
   WiFi.begin(ssid, password_wifi);
   Serial.print("Connecting to WiFi.");
@@ -98,6 +107,11 @@ void setup() {
   Debug.setResetCmdEnabled(true); // Enable the reset command
   rdebugIln("TELNET REMOTE DEBUG...ok!");
 
+  // MYSQL
+  if (conn.connect(server_addr, 3306, user, password)) {
+    delay(1000);
+  } else Serial.println("Connection failed.");
+
   delay(500);
 }
 
@@ -114,7 +128,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println("");
   delay(500);
-  
+
   if (String(topic).equals("coolLamp")) {
     pinMode(COOL_LAMP, OUTPUT);
     if (message.equals("1")) {
@@ -127,99 +141,105 @@ void callback(char* topic, byte* payload, unsigned int length) {
       digitalWrite(COOL_LAMP, HIGH);
     }
   }
-  
+
   if (String(topic).equals("out_filter")) {
     pinMode(OUT_FILTER, OUTPUT);
     if (message.equals("1")) {
       Serial.println("OUT FILTER ->ON");
       rdebugDln("OUT FILTER->ON");
-      digitalWrite(OUT_FILTER, HIGH);
+      digitalWrite(OUT_FILTER, LOW);
     } else {
       Serial.println("OUT FILTER->OFF");
       rdebugDln("OUT FILTER->OFF");
-      digitalWrite(OUT_FILTER, LOW);
+      digitalWrite(OUT_FILTER, HIGH);
     }
   }
 
   if (String(topic).equals("deep_red")) {
     pinMode(DEEP_RED, OUTPUT);
-    if(message.equals("1")) {
+    if (message.equals("1")) {
       Serial.println("DEEP_RED LED->ON");
       rdebugDln("DEEP_RED LED->ON");
       digitalWrite(DEEP_RED, LOW);
     } else {
       Serial.println("DEEP_RED LED->OFF");
       rdebugDln("DEEP_RED LED->OFF");
-      digitalWrite(DEEP_RED, HIGH);      
+      digitalWrite(DEEP_RED, HIGH);
     }
   }
 
   if (String(topic).equals("bright_red")) {
     pinMode(BRIGHT_RED_1, OUTPUT);
-    if(message.equals("1")) {
+    if (message.equals("1")) {
       Serial.println("BRIGHT_RED_1 LED->ON");
       rdebugDln("BRIGHT_RED_1 LED->ON");
       digitalWrite(BRIGHT_RED_1, LOW);
     } else {
       Serial.println("BRIGHT_RED_1 LED->OFF");
       rdebugDln("BRIGHT_RED_1 LED->OFF");
-      digitalWrite(BRIGHT_RED_1, HIGH);      
+      digitalWrite(BRIGHT_RED_1, HIGH);
     }
   }
 
   if (String(topic).equals("bright_blu")) {
     pinMode(BRIGHT_BLU, OUTPUT);
-    if(message.equals("1")) {
+    if (message.equals("1")) {
       Serial.println("BRIGHT_BLU LED->ON");
       rdebugDln("BRIGHT_BLU LED->ON");
       digitalWrite(BRIGHT_BLU, LOW);
     } else {
       Serial.println("BRIGHT_RED LED->OFF");
       rdebugDln("BRIGHT_RED LED->OFF");
-      digitalWrite(BRIGHT_BLU, HIGH);      
+      digitalWrite(BRIGHT_BLU, HIGH);
     }
   }
 
   if (String(topic).equals("royal_blu")) {
     pinMode(ROYAL_BLU, OUTPUT);
-    if(message.equals("1")) {
+    if (message.equals("1")) {
       Serial.println("ROYAL_BLU LED->ON");
       rdebugDln("ROYAL_BLU LED->ON");
       digitalWrite(ROYAL_BLU, LOW);
     } else {
       Serial.println("ROYAL_BLU LED->OFF");
       rdebugDln("ROYAL_BLU LED->OFF");
-      digitalWrite(ROYAL_BLU, HIGH);      
+      digitalWrite(ROYAL_BLU, HIGH);
     }
   }
 
   if (String(topic).equals("full_spectrum")) {
     pinMode(FULL_SPECTRUM, OUTPUT);
-    if(message.equals("1")) {
+    if (message.equals("1")) {
       Serial.println("FULL_SPECTRUM LED->ON");
       rdebugDln("FULL_SPECTRUM LED->ON");
       digitalWrite(FULL_SPECTRUM, LOW);
     } else {
       Serial.println("FULL_SPECTRUM LED->OFF");
       rdebugDln("FULL_SPECTRUM LED->OFF");
-      digitalWrite(FULL_SPECTRUM, HIGH);      
+      digitalWrite(FULL_SPECTRUM, HIGH);
     }
   }
-  
+
   if (String(topic).equals("temperature")) {
     int numberOfDevices = DS18B20.getDeviceCount();
     rdebugIln("Number of device %d founds.", numberOfDevices);
     DS18B20.requestTemperatures();
-    for(int i=0;i<numberOfDevices; i++) {
+
+    for (int i = 0; i < numberOfDevices; i++) {
       rdebugD("Sensore ");
       rdebugD("%d", i);
       rdebugD(": ");
       rdebugD("%f", DS18B20.getTempCByIndex(i));
       rdebugD(" gradi C");
-      rdebugDln(); 
-   }
+      rdebugDln();
+      float temperature = DS18B20.getTempCByIndex(i);
+      // String INSERT_SQL = (String)"insert into u112031db1.mis (timestamp, area, temperature) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Box_" + i + "\', " + temperature + ")";
+      // cur_mem = new MySQL_Cursor(&conn);
+      // cur_mem->execute(INSERT_SQL.c_str());
+      // delete cur_mem;
+    }
   }
-  
+
   if (String(topic).equals("testSingle")) {
     Serial.println("TEST PIN: " + message + " ->ON");
     rdebugDln("TEST PIN: %s ->ON", message.c_str());
