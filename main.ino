@@ -45,7 +45,7 @@ const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
 // LEDs
-int COOL_LAMP        =  4;
+int COOL_LAMP        =  99; // ex 4 (now range sensor)
 int OUT_FILTER       =  2;
 int FULL_SPECTRUM    = 13;
 int BRIGHT_BLU       = 14;
@@ -73,6 +73,12 @@ char user[] = "u112031db1";
 char password[] = "4i340So";
 MySQL_Connection conn((Client *)&clientWIFI);
 MySQL_Cursor *cur_mem;
+
+// RANGE SENSOR
+const int trigPin = 2; //D4
+const int echoPin = 15; //D8
+long duration;
+int distance;
 
 void setup() {
   Serial.begin(115200);
@@ -294,6 +300,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
         break;
     }
   }
+
+   if (String(topic).equals("distance")) {
+    Serial.print("distance: ");
+    rdebugD("distance: ");
+    float distance = getDistance();
+    Serial.println(distance);
+    rdebugDln("result: distance: %d", distance);
+  }
 }
 
 void loop() {
@@ -331,6 +345,7 @@ void reconnect() {
       clientMQTT.subscribe("coolLamp");
       clientMQTT.subscribe("out_filter");
       clientMQTT.subscribe("temperature");
+      clientMQTT.subscribe("distance");
       clientMQTT.subscribe("test");
       clientMQTT.subscribe("testSingle");
       clientMQTT.subscribe("testSingleOff");
@@ -363,4 +378,33 @@ String getTimestamp() {
   }
   clientHTTP.end();
   return timestamp;
+}
+
+float getDistance() {
+  // Clears the trigPin
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  // Sets the trigPin on HIGH state for 10 micro seconds
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  // Reads the echoPin, returns the sound wave travel time in microseconds
+  duration = pulseIn(echoPin, HIGH);
+  // Calculating the distance
+  distance = duration * 0.034 / 2;
+  // Prints the distance on the Serial Monitor
+  Serial.print(getTimestamp() + ": Distance: ");
+  Serial.println(distance);
+  Serial.print(getTimestamp() + ": Recording distance...");
+  rdebugD("&s: Distance: ", getTimestamp().c_str());
+  rdebugDln("%d", distance);
+  rdebugD("%s: Recording distance...", getTimestamp().c_str());
+  char result[8];
+  char* message = dtostrf(distance, 6, 2, result);
+  int length = strlen(message);
+  boolean retained = true;
+  clientMQTT.publish("distance_result", (byte*)message, length, retained);
+  Serial.println("done");
+  rdebugDln("done");
+  return distance;
 }
