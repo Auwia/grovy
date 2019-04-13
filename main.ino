@@ -45,7 +45,7 @@ const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
 // LEDs
-int COOL_LAMP        =  99; // ex 4 (now range sensor)
+int COOL_LAMP        =  4;
 int OUT_FILTER       =  2;
 int FULL_SPECTRUM    = 13;
 int BRIGHT_BLU       = 14;
