@@ -25,7 +25,6 @@ String timestamp;
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
 
-
 // PHASE : (GERMINATION, VEGETABLE_LOW, VEGETABLE_HIGH, FLOWERING_LOW, FLOWERING_HIGH)
 const char* PHASE = "GERMINATION";
 // LIGHT : (ON, OFF)
@@ -77,8 +76,6 @@ MySQL_Cursor *cur_mem;
 // RANGE SENSOR
 const int trigPin = 2; //D4
 const int echoPin = 15; //D8
-long duration;
-int distance;
 
 void setup() {
   Serial.begin(115200);
@@ -303,10 +300,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
    if (String(topic).equals("distance")) {
     Serial.print("distance: ");
-    rdebugD("distance: ");
     float distance = getDistance();
     Serial.println(distance);
-    rdebugDln("result: distance: %d", distance);
+    rdebugDln("result: distance: %f", distance);
   }
 }
 
@@ -381,6 +377,8 @@ String getTimestamp() {
 }
 
 float getDistance() {
+  long duration;
+  float distance;
   // Clears the trigPin
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -395,9 +393,8 @@ float getDistance() {
   // Prints the distance on the Serial Monitor
   Serial.print(getTimestamp() + ": Distance: ");
   Serial.println(distance);
+  rdebugDln("%s: Distance: %f", getTimestamp().c_str(), distance);
   Serial.print(getTimestamp() + ": Recording distance...");
-  rdebugD("&s: Distance: ", getTimestamp().c_str());
-  rdebugDln("%d", distance);
   rdebugD("%s: Recording distance...", getTimestamp().c_str());
   char result[8];
   char* message = dtostrf(distance, 6, 2, result);
