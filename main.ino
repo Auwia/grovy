@@ -1,8 +1,6 @@
 /* * Author: Massimo Manganiello * */
 /* 23-25/03/2019: Lamp first development. * version: 1.0 */
 
-#include <Adafruit_MCP3008.h>
-#include <Adafruit_MCP23017.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WebServer.h>
@@ -10,12 +8,9 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <PubSubClient.h>
 #include <SPI.h>
-#include <PZEM004T.h>
 #include <RemoteDebug.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <MySQL_Connection.h>
-#include <MySQL_Cursor.h>
 
 // TIMESTAMP
 String timestamp;
@@ -24,11 +19,6 @@ String timestamp;
 #define ONE_WIRE_BUS 12
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
-
-// PHASE : (GERMINATION, VEGETABLE_LOW, VEGETABLE_HIGH, FLOWERING_LOW, FLOWERING_HIGH)
-const char* PHASE = "GERMINATION";
-// LIGHT : (ON, OFF)
-const char* LIGHT = "ON";
 
 // WIFI
 const char* ssid = "UPCA9E82C2";
@@ -43,7 +33,6 @@ const char* mqttUser = "";
 const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
-// LEDs
 int COOL_LAMP        =  4;
 int OUT_FILTER       =  2;
 int FULL_SPECTRUM    = 13;
@@ -65,17 +54,6 @@ WiFiClient serverClients[MAX_SRV_CLIENTS];
 
 // FAN PWM
 const int FAN_IN_PWM = 16;
-
-// MYSQL
-IPAddress server_addr(185, 51, 11, 3);
-char user[] = "u112031db1";
-char password[] = "4i340So";
-MySQL_Connection conn((Client *)&clientWIFI);
-MySQL_Cursor *cur_mem;
-
-// RANGE SENSOR
-const int trigPin = 2; //D4
-const int echoPin = 15; //D8
 
 void setup() {
   Serial.begin(115200);
@@ -109,11 +87,6 @@ void setup() {
   Debug.setSerialEnabled(true);
   Debug.setResetCmdEnabled(true); // Enable the reset command
   rdebugIln("TELNET REMOTE DEBUG...ok!");
-
-  // MYSQL
-  if (conn.connect(server_addr, 3306, user, password)) {
-    delay(1000);
-  } else Serial.println("Connection failed.");
 
   delay(500);
 }
@@ -236,73 +209,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
       rdebugD(" gradi C");
       rdebugDln();
       float temperature = DS18B20.getTempCByIndex(i);
-      // String INSERT_SQL = (String)"insert into u112031db1.mis (timestamp, area, temperature) values (convert_tz(now(),@@session.time_zone,\'+02:00\'), \'Box_" + i + "\', " + temperature + ")";
-      // cur_mem = new MySQL_Cursor(&conn);
-      // cur_mem->execute(INSERT_SQL.c_str());
-      // delete cur_mem;
     }
-  }
-
-  if (String(topic).equals("testSingle")) {
-    Serial.println("TEST PIN: " + message + " ->ON");
-    rdebugDln("TEST PIN: %s ->ON", message.c_str());
-  }
-
-  if (String(topic).equals("testSingleOff")) {
-    Serial.println("TEST PIN: " + message + " ->OFF");
-    rdebugDln("TEST PIN: %s ->OFF", message.c_str());
-  }
-
-  if (String(topic).equals("test")) {
-    if (message.equals("1")) {
-      Serial.println("TEST->ON");
-      rdebugDln("TEST->ON");
-      Serial.println("TEST->OFF");
-      rdebugDln("TEST->OFF");
-    } else {
-      Serial.println("TEST->ON");
-      rdebugDln("TEST->ON");
-      Serial.println("TEST->OFF");
-      rdebugDln("TEST->OFF");
-    }
-  }
-
-  if (String(topic).equals("phase")) {
-    switch ((char)payload[0]) {
-      // PHASE : (0: GERMINATION, 1: VEGETABLE_LOW, 2: VEGETABLE_HIGH, 3: FLOWERING_LOW, 4: FLOWERING_HIGH)
-      case '0':
-        Serial.println("PHASE=GERMINATION");
-        rdebugDln("PHASE=GERMINATION");
-        PHASE = "GERMINATION";
-        break;
-      case '1':
-        Serial.println("PHASE=VEGETABLE_LOW");
-        rdebugDln("PHASE=VEGETABLE_LOW");
-        PHASE = "VEGETABLE_LOW";
-        break;
-      case '2':
-        Serial.println("PHASE=VEGETABLE_HIGH");
-        rdebugDln("PHASE=VEGETABLE_HIGH");
-        PHASE = "VEGETABLE_HIGH";
-        break;
-      case '3':
-        Serial.println("PHASE=FLOWERING_LOW");
-        rdebugDln("PHASE=FLOWERING_LOW");
-        PHASE = "FLOWERING_LOW";
-        break;
-      case '4':
-        Serial.println("PHASE=FLOWERING_HIGH");
-        rdebugDln("PHASE=FLOWERING_HIGH");
-        PHASE = "FLOWERING_HIGH";
-        break;
-    }
-  }
-
-   if (String(topic).equals("distance")) {
-    Serial.print("distance: ");
-    float distance = getDistance();
-    Serial.println(distance);
-    rdebugDln("result: distance: %f", distance);
   }
 }
 
@@ -336,15 +243,9 @@ void reconnect() {
       clientMQTT.subscribe("bright_blu");
       clientMQTT.subscribe("full_spectrum");
       clientMQTT.subscribe("royal_blu");
-      clientMQTT.subscribe("light");
-      clientMQTT.subscribe("phase");
       clientMQTT.subscribe("coolLamp");
       clientMQTT.subscribe("out_filter");
       clientMQTT.subscribe("temperature");
-      clientMQTT.subscribe("distance");
-      clientMQTT.subscribe("test");
-      clientMQTT.subscribe("testSingle");
-      clientMQTT.subscribe("testSingleOff");
     } else {
       Serial.print("failed, rc=");
       Serial.print(clientMQTT.state());
@@ -374,34 +275,4 @@ String getTimestamp() {
   }
   clientHTTP.end();
   return timestamp;
-}
-
-float getDistance() {
-  long duration;
-  float distance;
-  // Clears the trigPin
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  // Sets the trigPin on HIGH state for 10 micro seconds
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
-  // Calculating the distance
-  distance = duration * 0.034 / 2;
-  // Prints the distance on the Serial Monitor
-  Serial.print(getTimestamp() + ": Distance: ");
-  Serial.println(distance);
-  rdebugDln("%s: Distance: %f", getTimestamp().c_str(), distance);
-  Serial.print(getTimestamp() + ": Recording distance...");
-  rdebugD("%s: Recording distance...", getTimestamp().c_str());
-  char result[8];
-  char* message = dtostrf(distance, 6, 2, result);
-  int length = strlen(message);
-  boolean retained = true;
-  clientMQTT.publish("distance_result", (byte*)message, length, retained);
-  Serial.println("done");
-  rdebugDln("done");
-  return distance;
 }
