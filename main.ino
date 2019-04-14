@@ -244,7 +244,7 @@ void reconnect() {
       clientMQTT.subscribe("full_spectrum");
       clientMQTT.subscribe("royal_blu");
       clientMQTT.subscribe("coolLamp");
-      clientMQTT.subscribe("out_filter");
+      clientMQTT.subscribe("fanOut");
       clientMQTT.subscribe("temperature");
     } else {
       Serial.print("failed, rc=");
