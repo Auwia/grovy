@@ -118,7 +118,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   }
 
-  if (String(topic).equals("out_filter")) {
+  if (String(topic).equals("fanOut")) {
     pinMode(OUT_FILTER, OUTPUT);
     if (message.equals("1")) {
       Serial.println("OUT FILTER ->ON");
