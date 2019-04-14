@@ -11,3 +11,7 @@ const uint8_t D7   = 13;
 const uint8_t D8   = 15;
 const uint8_t D9   = 3;
 const uint8_t D10  = 1;
+
+multiple range sensors on same line:
+https://github.com/gamgine/HCSR04-ultrasonic-sensor-lib
+
