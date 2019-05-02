@@ -63,19 +63,19 @@ void setup(){
   clientMQTT.setServer(mqttServer, mqttPort);
   clientMQTT.setCallback(callback);
 
-  // TELNET REMOTE DEBUG
-  MDNS.addService("telnet", "tcp", 23);
-  Debug.begin(host);
-  Debug.setSerialEnabled(true);
-  Debug.setResetCmdEnabled(true); // Enable the reset command
-  rdebugIln("TELNET REMOTE DEBUG...ok!");
-
   // REMOTE UPDATE OTA
   MDNS.begin(host);
   httpUpdater.setup(&httpServer);
   httpServer.begin();
   MDNS.addService("http", "tcp", 80);
   Serial.printf("HTTPUpdateServer ready! Open http://%d.local/update in your browser\n", host);
+  
+  // TELNET REMOTE DEBUG
+  MDNS.addService("telnet", "tcp", 23);
+  Debug.begin(host);
+  Debug.setSerialEnabled(true);
+  Debug.setResetCmdEnabled(true); // Enable the reset command
+  rdebugIln("TELNET REMOTE DEBUG...ok!");
 
   // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
   LightSensor.begin();
@@ -190,10 +190,10 @@ void getDistance1(){
   rdebugD("A: ");
   float distance = hcsr04a.distanceInMillimeters() / 10;
   Serial.println(distance);
-  rdebugDln("%d", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
+  rdebugDln("%s", message);
   boolean retained = true;
   clientMQTT.publish("distance_1_result", (byte*)message, length, retained);
 }
@@ -202,10 +202,10 @@ void getDistance2(){
   rdebugD("B: ");
   float distance = hcsr04b.distanceInMillimeters() / 10;
   Serial.println(distance);
-  rdebugDln("%d", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
+  rdebugDln("%s", message);
   boolean retained = true;
   clientMQTT.publish("distance_2_result", (byte*)message, length, retained);
 }
