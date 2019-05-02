@@ -1,9 +1,11 @@
-#include <ESP8266WiFi.h>  // WIFI
-#include <PubSubClient.h> // MQTT
-#include <RemoteDebug.h>  // TELNET REMOTE DEBUG 
-#include <ESP8266mDNS.h>  // TELNET REMOTE DEBUG 
-#include <hcsr04.h>       // RANGE SENSOR
-
+#include <ESP8266WiFi.h>              // WIFI
+#include <PubSubClient.h>             // MQTT
+#include <RemoteDebug.h>              // TELNET REMOTE DEBUG 
+#include <ESP8266mDNS.h>              // TELNET REMOTE DEBUG 
+#include <hcsr04.h>                   // RANGE SENSOR
+#include <ESP8266WebServer.h>         // REMOTE UPDATE OTA
+#include <ESP8266HTTPUpdateServer.h>  // REMOTE UPDATE OTA
+#include <BH1750FVI.h>                // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
 #define TRIG_PINa 2
 #define ECHO_PINa 0
 #define TRIG_PINb 14 //D5
@@ -28,8 +30,22 @@ RemoteDebug Debug;
 WiFiClient serverClients[MAX_SRV_CLIENTS];
 const char* host = "esp8266-range_sensor";
 
+// RANGE SENSOR
 HCSR04 hcsr04a(TRIG_PINa, ECHO_PINa, 20, 4000);
 HCSR04 hcsr04b(TRIG_PINb, ECHO_PINb, 20, 4000);
+
+// REMOTE UPDATE OTA
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
+// GY-302 - BH1750 - LIGHT INTENSITY SENSOR
+/* GY-302 - BH1750 - LIGHT INTENSITY SENSOR
+  VCC  <-> 3V3
+  GND  <-> GND
+  SDA  <-> D2
+  SCL  <-> D1
+*/
+BH1750FVI LightSensor(BH1750FVI::k_DevModeContLowRes);
 
 void setup(){
   Serial.begin(115200);
@@ -54,6 +70,16 @@ void setup(){
   Debug.setResetCmdEnabled(true); // Enable the reset command
   rdebugIln("TELNET REMOTE DEBUG...ok!");
 
+  // REMOTE UPDATE OTA
+  MDNS.begin(host);
+  httpUpdater.setup(&httpServer);
+  httpServer.begin();
+  MDNS.addService("http", "tcp", 80);
+  Serial.printf("HTTPUpdateServer ready! Open http://%d.local/update in your browser\n", host);
+
+  // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
+  LightSensor.begin();
+
 }
 
 void loop() {
@@ -66,6 +92,9 @@ void loop() {
 
   // TELNET REMOTE DEBUG
   if (RemoteSerial) Debug.handle();
+
+  // REMOTE UPDATE OTA
+  httpServer.handleClient();
 }
 
 void reconnect() {
@@ -81,6 +110,10 @@ void reconnect() {
       clientMQTT.subscribe("distance_2");
       clientMQTT.subscribe("distance_1_result");
       clientMQTT.subscribe("distance_2_result");
+      clientMQTT.subscribe("light_sensor_1");
+      clientMQTT.subscribe("light_sensor_1_result");
+      clientMQTT.subscribe("light_sensor_2");
+      clientMQTT.subscribe("light_sensor_2_result");
     } else {
       Serial.print("failed, rc=");
       Serial.print(clientMQTT.state());
@@ -115,12 +148,49 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("distance_2")) {
     getDistance2();
   }
+  if (String(topic).equals("light_sensor_1")) {
+    getLightSensor(1);
+  }
+  if (String(topic).equals("light_sensor_2")) {
+    getLightSensor(2);
+  }
+}
+
+void getLightSensor(int sensorNr){
+  uint16_t lux = LightSensor.GetLightIntensity();
+  float result = lux;
+  boolean retained = true;
+  int length = 0;
+  
+  if (sensorNr == 1) {
+      Serial.print("Light: ");
+      rdebugD("Light: ");
+      Serial.println(lux);
+      rdebugDln("%d", lux);
+      char result_tmp[8];
+      char* message = dtostrf(result, 6, 1, result_tmp);
+      length = strlen(message);
+      clientMQTT.publish("light_sensor_1_result", (byte*)message, length, retained);
+  }
+
+  if (sensorNr == 2) {
+      Serial.print("Light: ");
+      rdebugD("Light: ");
+      Serial.println(lux);
+      rdebugDln("%d", lux);
+      char result_tmp[8];
+      char* message = dtostrf(result, 6, 1, result_tmp);
+      length = strlen(message);
+      clientMQTT.publish("light_sensor_2_result", (byte*)message, length, retained);
+  }
 }
 
 void getDistance1(){
   Serial.print("A: ");
+  rdebugD("A: ");
   float distance = hcsr04a.distanceInMillimeters() / 10;
   Serial.println(distance);
+  rdebugDln("%d", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
@@ -129,8 +199,10 @@ void getDistance1(){
 }
 void getDistance2(){
   Serial.print("B: ");
+  rdebugD("B: ");
   float distance = hcsr04b.distanceInMillimeters() / 10;
   Serial.println(distance);
+  rdebugDln("%d", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
