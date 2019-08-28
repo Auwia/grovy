@@ -6,8 +6,8 @@
 #include <ESP8266WebServer.h>         // REMOTE UPDATE OTA
 #include <ESP8266HTTPUpdateServer.h>  // REMOTE UPDATE OTA
 #include <BH1750FVI.h>                // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
-#define TRIG_PINa 2
-#define ECHO_PINa 0
+#define TRIG_PINa 2 // D4
+#define ECHO_PINa 0 // D3
 #define TRIG_PINb 14 //D5
 #define ECHO_PINb 12 //D6
 
