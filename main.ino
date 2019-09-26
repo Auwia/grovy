@@ -34,13 +34,14 @@ const char* mqttUser = "";
 const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
-// int COOL_LAMP        =  4;
-// int OUT_FILTER       =  2;
-int ROYAL_BLU        = 16; // D0
-int BRIGHT_RED_1     =  5; // D1
-int BRIGHT_BLU       =  4; // D2
-int DEEP_RED         =  0; // D3
-int FULL_SPECTRUM    =  2; // D4
+// int COOL_LAMP     =  4;
+int BRIGHT_BLU       = 16; // D0
+int DEEP_RED        =  5; // D1
+int BRIGHT_RED_1     =  4; // D2
+int ROYAL_BLU        =  0; // D3
+int ULTRA_VIOLET     =  2; // D4
+int WHITE      = 14; // D5
+int OUT_FILTER       = 12; // D6
 
 // REMOTE UPDATE OTA
 const char* host = "esp8266-webupdate";
@@ -107,15 +108,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
   delay(500);
 
   if (String(topic).equals("coolLamp")) {
-    pinMode(COOL_LAMP, OUTPUT);
+    // pinMode(COOL_LAMP, OUTPUT);
     if (message.equals("1")) {
       Serial.println("COOL LAMP->ON");
       rdebugDln("COOL LAMP->ON");
-      digitalWrite(COOL_LAMP, LOW);
+    //  digitalWrite(COOL_LAMP, LOW);
     } else {
       Serial.println("COOL_LAMP->OFF");
       rdebugDln("COOL_LAMP->OFF");
-      digitalWrite(COOL_LAMP, HIGH);
+    //  digitalWrite(COOL_LAMP, HIGH);
     }
   }
 
@@ -184,16 +185,29 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   }
 
-  if (String(topic).equals("full_spectrum")) {
-    pinMode(FULL_SPECTRUM, OUTPUT);
+  if (String(topic).equals("ultra_violet")) {
+    pinMode(ULTRA_VIOLET, OUTPUT);
     if (message.equals("1")) {
-      Serial.println("FULL_SPECTRUM LED->ON");
-      rdebugDln("FULL_SPECTRUM LED->ON");
-      digitalWrite(FULL_SPECTRUM, LOW);
+      Serial.println("ULTRA_VIOLET LED->ON");
+      rdebugDln("ULTRA_VIOLET LED->ON");
+      digitalWrite(ULTRA_VIOLET, LOW);
     } else {
-      Serial.println("FULL_SPECTRUM LED->OFF");
-      rdebugDln("FULL_SPECTRUM LED->OFF");
-      digitalWrite(FULL_SPECTRUM, HIGH);
+      Serial.println("ULTRA_VIOLET LED->OFF");
+      rdebugDln("ULTRA_VIOLET LED->OFF");
+      digitalWrite(ULTRA_VIOLET, HIGH);
+    }
+  }
+
+  if (String(topic).equals("white")) {
+    pinMode(WHITE, OUTPUT);
+    if (message.equals("1")) {
+      Serial.println("WHITE LED->ON");
+      rdebugDln("WHITE LED->ON");
+      digitalWrite(WHITE, LOW);
+    } else {
+      Serial.println("WHITE LED->OFF");
+      rdebugDln("WHITE LED->OFF");
+      digitalWrite(WHITE, HIGH);
     }
   }
 
@@ -242,8 +256,9 @@ void reconnect() {
       clientMQTT.subscribe("deep_red");
       clientMQTT.subscribe("bright_red");
       clientMQTT.subscribe("bright_blu");
-      clientMQTT.subscribe("full_spectrum");
+      clientMQTT.subscribe("ultra_violet");
       clientMQTT.subscribe("royal_blu");
+      clientMQTT.subscribe("white");
       clientMQTT.subscribe("coolLamp");
       clientMQTT.subscribe("fanOut");
       clientMQTT.subscribe("temperature");
