@@ -1,4 +1,4 @@
-/* * Author: Massimo Manganiello * */
+\/* * Author: Massimo Manganiello * */
 /* 23-25/03/2019: Lamp first development. * version: 1.0 */
 /* 19/09/2019: New lamp. * version: 1.1 */
 
@@ -35,12 +35,12 @@ const char* mqttPassword = "";
 PubSubClient clientMQTT(clientWIFI);
 
 // int COOL_LAMP     =  4;
-int BRIGHT_BLU       = 16; // D0
-int DEEP_RED        =  5; // D1
+int DEEP_RED         = 16; // D0
+int BRIGHT_BLU       =  5; // D1
 int BRIGHT_RED_1     =  4; // D2
 int ROYAL_BLU        =  0; // D3
 int ULTRA_VIOLET     =  2; // D4
-int WHITE      = 14; // D5
+int WHITE            = 14; // D5
 int OUT_FILTER       = 12; // D6
 
 // REMOTE UPDATE OTA
