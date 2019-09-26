@@ -1,4 +1,4 @@
-\/* * Author: Massimo Manganiello * */
+/* * Author: Massimo Manganiello * */
 /* 23-25/03/2019: Lamp first development. * version: 1.0 */
 /* 19/09/2019: New lamp. * version: 1.1 */
 
