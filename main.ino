@@ -6,10 +6,14 @@
 #include <ESP8266WebServer.h>         // REMOTE UPDATE OTA
 #include <ESP8266HTTPUpdateServer.h>  // REMOTE UPDATE OTA
 #include <BH1750FVI.h>                // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
-#define TRIG_PINa 2 // D4
-#define ECHO_PINa 0 // D3
-#define TRIG_PINb 14 //D5
-#define ECHO_PINb 12 //D6
+
+#define ECHO_PINa 16  // D0
+#define TRIG_PINa  5  // D1
+#define ECHO_PINb  2  // D4
+#define TRIG_PINb 14  // D5
+#define ECHO_PINc 12  // D6
+#define TRIG_PINc 13  // D7
+
 
 // WIFI
 const char* ssid = "UPCA9E82C2";
@@ -33,22 +37,24 @@ const char* host = "esp8266-range_sensor";
 // RANGE SENSOR
 HCSR04 hcsr04a(TRIG_PINa, ECHO_PINa, 20, 4000);
 HCSR04 hcsr04b(TRIG_PINb, ECHO_PINb, 20, 4000);
+HCSR04 hcsr04c(TRIG_PINc, ECHO_PINc, 20, 4000);
 
 // REMOTE UPDATE OTA
-ESP8266WebServer httpServer(80);
+ESP8266WebServer httpServer(81);
 ESP8266HTTPUpdateServer httpUpdater;
 
 // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
 /* GY-302 - BH1750 - LIGHT INTENSITY SENSOR
   VCC  <-> 3V3
   GND  <-> GND
-  SDA  <-> D2
-  SCL  <-> D1
+  SDA  <-> D1
+  SCL  <-> D0
 */
 BH1750FVI LightSensor(BH1750FVI::k_DevModeContLowRes);
 
 void setup(){
   Serial.begin(115200);
+  Wire.begin(D3,D2);
 
   // WIFI
   WiFi.begin(ssid, password_wifi);
@@ -67,7 +73,7 @@ void setup(){
   MDNS.begin(host);
   httpUpdater.setup(&httpServer);
   httpServer.begin();
-  MDNS.addService("http", "tcp", 80);
+  MDNS.addService("http", "tcp", 81);
   Serial.printf("HTTPUpdateServer ready! Open http://%d.local/update in your browser\n", host);
   
   // TELNET REMOTE DEBUG
@@ -108,8 +114,10 @@ void reconnect() {
       rdebugI("connected");
       clientMQTT.subscribe("distance_1");
       clientMQTT.subscribe("distance_2");
+      clientMQTT.subscribe("distance_3");
       clientMQTT.subscribe("distance_1_result");
       clientMQTT.subscribe("distance_2_result");
+      clientMQTT.subscribe("distance_3_result");
       clientMQTT.subscribe("light_sensor_1");
       clientMQTT.subscribe("light_sensor_1_result");
       clientMQTT.subscribe("light_sensor_2");
@@ -133,10 +141,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived in topic: ");
   rdebugD("Message arrived in topic: ");
   Serial.println(topic);
+  rdebugD("%s", topic);
   Serial.print("Message:");
   rdebugDln("Message:");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
+    // rdebugDln("%s", (char)payload[i]);
     message += (char)payload[i];
   }
   Serial.println("");
@@ -147,6 +157,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if (String(topic).equals("distance_2")) {
     getDistance2();
+  }
+  if (String(topic).equals("distance_3")) {
+    getDistance3();
   }
   if (String(topic).equals("light_sensor_1")) {
     getLightSensor(1);
@@ -190,10 +203,10 @@ void getDistance1(){
   rdebugD("A: ");
   float distance = hcsr04a.distanceInMillimeters() / 10;
   Serial.println(distance);
+  rdebugDln("%f", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
-  rdebugDln("%s", message);
   boolean retained = true;
   clientMQTT.publish("distance_1_result", (byte*)message, length, retained);
 }
@@ -202,10 +215,22 @@ void getDistance2(){
   rdebugD("B: ");
   float distance = hcsr04b.distanceInMillimeters() / 10;
   Serial.println(distance);
+  rdebugDln("%f", distance);
   char result[8];
   char* message = dtostrf(distance, 6, 1, result);
   int length = strlen(message);
-  rdebugDln("%s", message);
   boolean retained = true;
   clientMQTT.publish("distance_2_result", (byte*)message, length, retained);
+}
+void getDistance3(){
+  Serial.print("C: ");
+  rdebugD("C: ");
+  float distance = hcsr04c.distanceInMillimeters() / 10;
+  Serial.println(distance);
+  rdebugDln("%f", distance);
+  char result[8];
+  char* message = dtostrf(distance, 6, 1, result);
+  int length = strlen(message);
+  boolean retained = true;
+  clientMQTT.publish("distance_3_result", (byte*)message, length, retained);
 }
