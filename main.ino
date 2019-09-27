@@ -17,7 +17,7 @@
 String timestamp;
 
 // TEMPERATURE
-#define ONE_WIRE_BUS 13
+#define ONE_WIRE_BUS 12
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature DS18B20(&oneWire);
 
@@ -41,7 +41,7 @@ int BRIGHT_RED_1     =  4; // D2
 int ROYAL_BLU        =  0; // D3
 int ULTRA_VIOLET     =  2; // D4
 int WHITE            = 14; // D5
-int OUT_FILTER       = 12; // D6
+int OUT_FILTER       = 13; // D7
 
 // REMOTE UPDATE OTA
 const char* host = "esp8266-webupdate";
