@@ -1,3 +1,6 @@
+/* * Author: Massimo Manganiello * */
+/* 19/09/2019: New range sensore module, 3 digital meters. * version: 1.1 */
+
 #include <ESP8266WiFi.h>              // WIFI
 #include <PubSubClient.h>             // MQTT
 #include <RemoteDebug.h>              // TELNET REMOTE DEBUG 
