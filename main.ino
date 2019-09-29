@@ -209,6 +209,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
       rdebugD(" gradi C");
       rdebugDln();
       float temperature = DS18B20.getTempCByIndex(i);
+      String message = "Box_" + String(i) + "|" + String(temperature);
+      char charBuf[50];
+      int length = message.length();
+      message.toCharArray(charBuf, 50);
+      boolean retained = true;
+      clientMQTT.publish("temperature_result", (byte*)message.c_str(), length, retained);
     }
   }
 }
