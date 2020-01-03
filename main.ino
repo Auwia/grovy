@@ -1,5 +1,6 @@
 /* * Author: Massimo Manganiello * */
 /* 19/09/2019: New range sensore module, 3 digital meters. * version: 1.1 */
+/* 03/01/2020: Removed sensor light. * version: 1.1_no_lux */
 
 #include <ESP8266WiFi.h>              // WIFI
 #include <PubSubClient.h>             // MQTT
@@ -8,12 +9,11 @@
 #include <hcsr04.h>                   // RANGE SENSOR
 #include <ESP8266WebServer.h>         // REMOTE UPDATE OTA
 #include <ESP8266HTTPUpdateServer.h>  // REMOTE UPDATE OTA
-#include <BH1750FVI.h>                // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
 
 #define ECHO_PINa 16  // D0
 #define TRIG_PINa  5  // D1
-#define ECHO_PINb  2  // D4
-#define TRIG_PINb 14  // D5
+#define ECHO_PINb  4  // D2
+#define TRIG_PINb  0  // D3
 #define ECHO_PINc 12  // D6
 #define TRIG_PINc 13  // D7
 
@@ -46,18 +46,8 @@ HCSR04 hcsr04c(TRIG_PINc, ECHO_PINc, 20, 4000);
 ESP8266WebServer httpServer(81);
 ESP8266HTTPUpdateServer httpUpdater;
 
-// GY-302 - BH1750 - LIGHT INTENSITY SENSOR
-/* GY-302 - BH1750 - LIGHT INTENSITY SENSOR
-  VCC  <-> 3V3
-  GND  <-> GND
-  SDA  <-> D1
-  SCL  <-> D0
-*/
-BH1750FVI LightSensor(BH1750FVI::k_DevModeContLowRes);
-
 void setup(){
   Serial.begin(115200);
-  Wire.begin(D3,D2);
 
   // WIFI
   WiFi.begin(ssid, password_wifi);
@@ -85,9 +75,6 @@ void setup(){
   Debug.setSerialEnabled(true);
   Debug.setResetCmdEnabled(true); // Enable the reset command
   rdebugIln("TELNET REMOTE DEBUG...ok!");
-
-  // GY-302 - BH1750 - LIGHT INTENSITY SENSOR
-  LightSensor.begin();
 
 }
 
@@ -121,10 +108,6 @@ void reconnect() {
       clientMQTT.subscribe("distance_1_result");
       clientMQTT.subscribe("distance_2_result");
       clientMQTT.subscribe("distance_3_result");
-      clientMQTT.subscribe("light_sensor_1");
-      clientMQTT.subscribe("light_sensor_1_result");
-      clientMQTT.subscribe("light_sensor_2");
-      clientMQTT.subscribe("light_sensor_2_result");
     } else {
       Serial.print("failed, rc=");
       Serial.print(clientMQTT.state());
@@ -163,41 +146,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if (String(topic).equals("distance_3")) {
     getDistance3();
-  }
-  if (String(topic).equals("light_sensor_1")) {
-    getLightSensor(1);
-  }
-  if (String(topic).equals("light_sensor_2")) {
-    getLightSensor(2);
-  }
-}
-
-void getLightSensor(int sensorNr){
-  uint16_t lux = LightSensor.GetLightIntensity();
-  float result = lux;
-  boolean retained = true;
-  int length = 0;
-  
-  if (sensorNr == 1) {
-      Serial.print("Light: ");
-      rdebugD("Light: ");
-      Serial.println(lux);
-      rdebugDln("%d", lux);
-      char result_tmp[8];
-      char* message = dtostrf(result, 6, 1, result_tmp);
-      length = strlen(message);
-      clientMQTT.publish("light_sensor_1_result", (byte*)message, length, retained);
-  }
-
-  if (sensorNr == 2) {
-      Serial.print("Light: ");
-      rdebugD("Light: ");
-      Serial.println(lux);
-      rdebugDln("%d", lux);
-      char result_tmp[8];
-      char* message = dtostrf(result, 6, 1, result_tmp);
-      length = strlen(message);
-      clientMQTT.publish("light_sensor_2_result", (byte*)message, length, retained);
   }
 }
 
