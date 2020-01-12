@@ -1,6 +1,8 @@
 /* * Author: Massimo Manganiello * */
 /* 19/09/2019: New range sensore module, 3 digital meters. * version: 1.1 */
 /* 04/01/2020: 3 digital meters + DS18B20 temperature sensors + fan out ON/OFF. * version: 1.2 */
+/* 12/01/2020: custom delay to avoid any reset. * version: 1.2 */
+/* ->    With this function, every 100 ms, the ESP wdt is fed and the cpu is yielded for any pending tasks. */
 
 #include <ESP8266WiFi.h>              // WIFI
 #include <PubSubClient.h>             // MQTT
@@ -60,7 +62,7 @@ void setup() {
   WiFi.begin(ssid, password_wifi);
   Serial.print("Connecting to WiFi.");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    myDelay(500);
     Serial.print(".");
   }
   Serial.println("ok.");
@@ -128,7 +130,7 @@ void reconnect() {
       rdebugEln(" try again in 1 seconds");
       // Wait 5->1 seconds before retrying //BUG_001
       // delay(5000);
-      delay(250);
+      myDelay(250);
     }
   }
 }
@@ -147,7 +149,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i];
   }
   Serial.println("");
-  delay(500);
+  myDelay(500);
 
   if (String(topic).equals("distance_1")) {
     getDistance1();
@@ -221,4 +223,15 @@ void getTemperature() {
     boolean retained = true;
     clientMQTT.publish("temperature_result", (byte*)message.c_str(), length, retained);
   }
+}
+
+void myDelay(int ms) {
+    int i;
+    for(i=1;i!=ms;i++) {
+          delay(1);
+          if(i%100 == 0) {
+                  ESP.wdtFeed(); 
+                  yield();
+          }
+    }
 }
