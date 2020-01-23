@@ -3,6 +3,8 @@
 /* 04/01/2020: 3 digital meters + DS18B20 temperature sensors + fan out ON/OFF. * version: 1.2 */
 /* 12/01/2020: custom delay to avoid any reset. * version: 1.2 */
 /* ->    With this function, every 100 ms, the ESP wdt is fed and the cpu is yielded for any pending tasks. */
+/* 13/01/2020: Save crash. * version: 1.2 */
+/* 23/01/2020: MAX(temperature) and AVG(temperature), clean-up log * version: 1.2 */
 
 #include <ESP8266WiFi.h>              // WIFI
 #include <PubSubClient.h>             // MQTT
@@ -13,6 +15,7 @@
 #include <ESP8266HTTPUpdateServer.h>  // REMOTE UPDATE OTA
 #include <OneWire.h>                  // TEMPERATURE SENSORS 1-WIRE DS18B20
 #include <DallasTemperature.h>        // TEMPERATURE SENSORS 1-WIRE DS18B20
+#include <Esp.h>                      // SAVE CRASH
 
 #define ECHO_PINa 16  // D0
 #define TRIG_PINa  5  // D1
@@ -121,6 +124,7 @@ void reconnect() {
       clientMQTT.subscribe("distance_2_result");
       clientMQTT.subscribe("distance_3_result");
       clientMQTT.subscribe("temperature");        // TEMPERATURE SENSORS 1-WIRE DS18B20
+      clientMQTT.subscribe("error");              // SAVE CRASH
     } else {
       Serial.print("failed, rc=");
       Serial.print(clientMQTT.state());
@@ -137,18 +141,9 @@ void reconnect() {
 
 void callback(char* topic, byte* payload, unsigned int length) {
   String message;
-  Serial.print("Message arrived in topic: ");
-  rdebugD("Message arrived in topic: ");
-  Serial.println(topic);
-  rdebugD("%s", topic);
-  Serial.print("Message:");
-  rdebugDln("Message:");
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-    // rdebugDln("%s", (char)payload[i]);
     message += (char)payload[i];
   }
-  Serial.println("");
   myDelay(500);
 
   if (String(topic).equals("distance_1")) {
@@ -164,8 +159,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic).equals("temperature")) {
     getTemperature();
   }
+  // SAVE CRASH
+  if (String(topic).equals("error")) {
+    getError();
+  }
 }
 
+void getError() {
+  rst_info* rinfo = ESP.getResetInfoPtr();
+  Serial.println(rinfo->reason);
+  rdebugDln("%s", ESP.getResetInfo().c_str());
+  String message = ESP.getResetInfo();
+  char charBuf[50];
+  int length = message.length();
+  message.toCharArray(charBuf, 50);
+  boolean retained = true;
+  clientMQTT.publish("error_result", (byte*)message.c_str(), length, retained);
+
+}
 void getDistance1() {
   Serial.print("A: ");
   rdebugD("A: ");
@@ -208,6 +219,13 @@ void getTemperature() {
   rdebugIln("Number of device %d founds.", numberOfDevices);
   DS18B20.requestTemperatures();
 
+  float temperature_max = 0;
+  float temperature_sum = 0;
+  char charBuf[50];
+  int length = 0;
+  String message;
+  boolean retained = true;
+  
   for (int i = 0; i < numberOfDevices; i++) {
     rdebugD("Sensore ");
     rdebugD("%d", i);
@@ -216,22 +234,36 @@ void getTemperature() {
     rdebugD(" gradi C");
     rdebugDln();
     float temperature = DS18B20.getTempCByIndex(i);
-    String message = "Box_" + String(i) + "|" + String(temperature);
-    char charBuf[50];
-    int length = message.length();
-    message.toCharArray(charBuf, 50);
-    boolean retained = true;
+    if (temperature > temperature_max) {
+        temperature_max = temperature;
+    }
+    temperature_sum = temperature_sum + temperature;
+    message = "Box_" + String(i) + "|" + String(temperature);
+    length = message.length();
+    message.toCharArray(charBuf, 50);  
     clientMQTT.publish("temperature_result", (byte*)message.c_str(), length, retained);
   }
+  message = String(temperature_max);
+  rdebugDln("MAX(temperature): %f", temperature_max);
+  length = message.length();
+  message.toCharArray(charBuf, 50);
+  clientMQTT.publish("temperature_max_result", (byte*)message.c_str(), length, retained);
+
+  float temperature_avg = temperature_sum / numberOfDevices;
+  message = String(temperature_avg);
+  rdebugDln("AVG(temperature): %f", temperature_avg);
+  length = message.length();
+  message.toCharArray(charBuf, 50);
+  clientMQTT.publish("temperature_avg_result", (byte*)message.c_str(), length, retained);
 }
 
 void myDelay(int ms) {
-    int i;
-    for(i=1;i!=ms;i++) {
-          delay(1);
-          if(i%100 == 0) {
-                  ESP.wdtFeed(); 
-                  yield();
-          }
+  int i;
+  for (i = 1; i != ms; i++) {
+    delay(1);
+    if (i % 100 == 0) {
+      ESP.wdtFeed();
+      yield();
     }
+  }
 }
