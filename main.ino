@@ -226,17 +226,17 @@ void getTemperature() {
   int length = 0;
   String message;
   boolean retained = true;
-  
+
   for (int i = 0; i < numberOfDevices; i++) {
     float temperature = DS18B20.getTempCByIndex(i);
     rdebugDln("Sensor nr: %d temp: %f°C", i, temperature);
     if (temperature > temperature_max) {
-        temperature_max = temperature;
+      temperature_max = temperature;
     }
     temperature_sum = temperature_sum + temperature;
     message = "Box_" + String(i) + "|" + String(temperature);
     length = message.length();
-    message.toCharArray(charBuf, 50);  
+    message.toCharArray(charBuf, 50);
     clientMQTT.publish("temperature_result", (byte*)message.c_str(), length, retained);
   }
   message = String(temperature_max);
