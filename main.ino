@@ -5,6 +5,7 @@
 /* ->    With this function, every 100 ms, the ESP wdt is fed and the cpu is yielded for any pending tasks. */
 /* 13/01/2020: Save crash. * version: 1.2 */
 /* 23/01/2020: MAX(temperature) and AVG(temperature), clean-up log * version: 1.2 */
+/* 04/02/2020: DS18B20: clean-up log * version: 1.2 */
 
 #include <ESP8266WiFi.h>              // WIFI
 #include <PubSubClient.h>             // MQTT
@@ -227,13 +228,8 @@ void getTemperature() {
   boolean retained = true;
   
   for (int i = 0; i < numberOfDevices; i++) {
-    rdebugD("Sensore ");
-    rdebugD("%d", i);
-    rdebugD(": ");
-    rdebugD("%f", DS18B20.getTempCByIndex(i));
-    rdebugD(" gradi C");
-    rdebugDln();
     float temperature = DS18B20.getTempCByIndex(i);
+    rdebugDln("Sensor nr: %d temp: %f°C", i, temperature);
     if (temperature > temperature_max) {
         temperature_max = temperature;
     }
