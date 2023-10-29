@@ -6,6 +6,7 @@
 #include <ESP8266WebServer.h>
 #include <Wire.h>
 #include <WiFiUdp.h>
+#include <DS1302.h>
 
 const char* ssidRouter = "UPC2522560";
 const char* passwordRouter = "7FxuryjpTtus";
@@ -19,10 +20,17 @@ bool isAPMode = true;
 
 Adafruit_MCP23X17 mcp;
 
+// Init the DS1302
+DS1302 rtc(0, 2, 14);
+
 // Dichiarazione di un array per memorizzare lo stato dei rele
 bool relayState[16] = { LOW };  // Inizialmente tutti i rele spenti
 
 void setup() {
+  // Set the clock to run-mode, and disable the write protection
+  rtc.halt(false);
+  rtc.writeProtect(false);
+
   Serial.begin(9600);
 
   // Imposta l'ESP8266 in modalità Router o AP in base alla variabile isAPMode
@@ -101,4 +109,18 @@ void setup() {
 
 void loop() {
   server.handleClient();
+
+  // Send Day-of-Week
+  Serial.print(rtc.getDOWStr());
+  Serial.print(" ");
+  
+  // Send date
+  Serial.print(rtc.getDateStr());
+  Serial.print(" -- ");
+
+  // Send time
+  Serial.println(rtc.getTimeStr());
+  
+  // Wait one second before repeating :)
+  delay (1000);
 }
